@@ -194,3 +194,9 @@ this machine; it is NOT full audit runtime or a promised benchmark elsewhere.
 All 221 tests pass, including optional real integrations. No sample answer files
 were loaded. Next is Prompt 05, temporal resource linking/reconstruction; policy,
 planner, verifier, CLI and complete log/media interpretation remain unimplemented.
+
+## Stage 05: per-store temporal state
+
+`StateIndex(facts=(), scopes=()).resolve(identity: IdentityResolution, audit_at: str) -> StateView` indexes once; `StateView(audit_at, identity, resources, issues)` contains `ResourceState(entity, category, state, latest, fields, history, claims, issues)` and provenance-bearing `FieldObservation(field, value, fact)`. Physical stores stay distinct; both timestamps gate evidence; explicit references and historical identity preserve links. Claims cannot override readbacks. Partial fields retain earlier observations without manufacturing a merged record. Explicit full-record metadata and complete exact scopes can supersede prior fields/absence. Conflicting current captures remain unresolved.
+
+237 tests pass. All 518 structured request views reconstructed (1,009 relevant physical resources) in 1.483 seconds excluding preparation; zero current state conflicts. This is adapter/state coverage, not verdict accuracy or full runtime. Policy/planner/logs/media remain pending.
