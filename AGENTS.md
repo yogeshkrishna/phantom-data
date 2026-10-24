@@ -37,11 +37,11 @@
 10. **No reconstruction of prior turns.** Do not synthesize or reconstruct
     turns that are not present in the actual log.
 
-11. **Small assignments, readable code.** The 300-line limit applies to each
-    newly assigned agent task, not to the total accumulated project. Do not
-    compress declarations or multiple statements with semicolons to fit it.
-    Request a smaller assignment when necessary. Architect-reviewed repairs
-    may expand existing code while preserving the locked public interfaces.
+11. **Focused Codex stages, readable code.** For the authorized staged Codex
+    continuation, the former 300-line task ceiling is replaced by focused
+    modules and meaningful tests. Do not compress code to meet an arbitrary
+    line count, remove coverage, or expand beyond the authorized stages.
+    Preserve locked public interfaces and verify each stage before proceeding.
 
 12. **Logging limitations.** A missing exact model identifier or a truncated
     prompt is an unresolved transcript defect. Mark it truthfully and seek
