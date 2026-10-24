@@ -151,7 +151,8 @@ classify_intent(request_text: str) -> IntentDecision
 # phantom.identities
 IdentitySupport(evidence_id: str, source_path: str, locator: str, available_at: str)
 IdentityVersion(user_id: str, field: str, value: str, effective_from: str | None,
-                effective_until: str | None, source: IdentitySupport)
+                effective_until: str | None, source: IdentitySupport,
+                observation_only: bool = False)
 IdentityResolution(status: str, user_ids: tuple[str, ...], identifiers: IdentifierMap,
                    current: dict[str, str], versions: tuple[IdentityVersion, ...],
                    supports: tuple[IdentitySupport, ...], issues: tuple[str, ...])
@@ -177,16 +178,19 @@ records and numeric suffixes cannot. Current values are not backdated before
 their observation. Inconsistent audit chains and same-time field conflicts are
 diagnosed; ambiguous owners are never unioned. Ownership windows can resolve
 explicit email reuse at requested_at using only evidence visible by audit_at.
+Secondary-copy values are observation-only aliases: they cannot overwrite the
+canonical CSV/audit-derived current identity or establish continuous ownership.
+Conflicts between copies are diagnosed separately from canonical identity conflicts.
 
 Real structured-source integration covers all 518 request identity lookups.
 Intent distribution: 508 explicit erasure requests (446 EN, 14 PT, 12 each
 FR/ES/JA/KO), 10 non-deletion requests, zero ambiguous texts in this supplied set.
-All 518 obtain a unique supported subject link; 94 use a historical email alias.
+All 518 obtain a unique supported subject link; 100 use a historical email alias.
 One same-time email field conflict across SQL stores remains explicitly flagged,
-with no arbitrary current email selected. This is coverage, NOT verdict accuracy.
-Index construction plus all 518 identity resolutions measured 0.282 seconds on
+without replacing the canonical current email. This is coverage, NOT verdict accuracy.
+Index construction plus all 518 identity resolutions measured 0.256 seconds on
 this machine; it is NOT full audit runtime or a promised benchmark elsewhere.
 
-All 219 tests pass, including optional real integrations. No sample answer files
+All 221 tests pass, including optional real integrations. No sample answer files
 were loaded. Next is Prompt 05, temporal resource linking/reconstruction; policy,
 planner, verifier, CLI and complete log/media interpretation remain unimplemented.

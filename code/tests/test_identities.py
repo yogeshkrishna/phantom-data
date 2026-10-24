@@ -112,6 +112,21 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(result.supports[0].evidence_id, "file")
         self.assertNotIn("current@example.test", result.identifiers["email"])
 
+    def test_later_secondary_copy_cannot_rewrite_canonical_current_identity(self):
+        fields = dict(customer_reference="subject-A", email="stale-copy@example.test")
+        index = IdentityIndex([person()], [], [observation(fields, observed=FEB, available=FEB)])
+        result = index.resolve("stale-copy@example.test", MAR)
+        self.assertEqual(result.current["email"], "current@example.test")
+        self.assertIn("stale-copy@example.test", result.identifiers["email"])
+        self.assertTrue(all(v.observation_only for v in result.versions if v.source.evidence_id == "file"))
+
+    def test_conflicting_copies_diagnosed_without_losing_canonical_identity(self):
+        first = observation(dict(customer_reference="subject-A", email="first@example.test"), FEB, FEB)
+        second = observation(dict(customer_reference="subject-A", email="second@example.test"), FEB, FEB)
+        result = IdentityIndex([person()], [], [first, second]).resolve("current@example.test", MAR)
+        self.assertEqual(result.current["email"], "current@example.test")
+        self.assertIn("CONFLICTING_STORED_IDENTITY_OBSERVATIONS", result.issues)
+
     def test_future_capture_and_query_only_cannot_link(self):
         fields = dict(customer_reference="subject-A", email="observed@example.test")
         index = IdentityIndex([person(updated=APR)], [], [observation(fields, available=APR)])

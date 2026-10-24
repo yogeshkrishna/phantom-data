@@ -34,6 +34,7 @@ class IdentityVersion:
     effective_from: str | None
     effective_until: str | None
     source: IdentitySupport
+    observation_only: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +161,7 @@ class IdentityIndex:
     def _history(self, user, cutoff):
         versions, issues = [], set()
         anchors = defaultdict(list)
+        copy_anchors = defaultdict(list)
         current = self._current.get(user)
         if current and current[1] <= cutoff:
             row, time, source = current
@@ -186,8 +188,14 @@ class IdentityIndex:
                 anchors[field].append((time, row["new_value"], source))
         for observed, available, field, value, observed_text, source in self._fact_observations.get(user, ()):
             if observed <= cutoff and available <= cutoff:
-                versions.append(IdentityVersion(user, field, value, observed_text, None, source))
-                anchors[field].append((observed, value, source))
+                # Copies prove an alias at this observation, not a canonical
+                # identity transition or a continuous ownership interval.
+                versions.append(IdentityVersion(user, field, value, observed_text, None, source, True))
+                copy_anchors[field].append((observed, value, source))
+        for field, values in copy_anchors.items():
+            latest = max(item[0] for item in values)
+            if len({normalize_identifier(field, value) for time, value, _ in values if time == latest}) > 1:
+                issues.add("CONFLICTING_STORED_IDENTITY_OBSERVATIONS")
         state = {}
         for field, values in anchors.items():
             latest = max(item[0] for item in values)
@@ -206,7 +214,7 @@ class IdentityIndex:
         bounded = []
         for version in versions:
             until = _instant(version.effective_until) if version.effective_until else None
-            if version.effective_from:
+            if version.effective_from and not version.observation_only:
                 start = _instant(version.effective_from)
                 changes = [time for time, value, _ in anchors[version.field]
                            if time > start and normalize_identifier(version.field, value) !=
@@ -237,6 +245,10 @@ class IdentityIndex:
             for match in matches:
                 if issues & {"AUDIT_CHAIN_GAP", "CURRENT_AUDIT_GAP", "CONFLICTING_IDENTITY_OBSERVATIONS"}:
                     continue
+                if match.observation_only:
+                    if match.effective_from and _instant(match.effective_from) == requested:
+                        active.add(user)
+                    continue
                 if match.effective_from and _instant(match.effective_from) <= requested and (
                     match.effective_until is None or requested < _instant(match.effective_until)):
                     active.add(user)
@@ -258,7 +270,8 @@ class IdentityIndex:
             issues.add("HISTORICAL_EMAIL_MATCH")
         versions = tuple(sorted(set(versions), key=lambda version: (version.field,
                          version.effective_from or "", version.effective_until or "", version.value,
-                         version.source.evidence_id, version.source.locator)))
+                         version.source.evidence_id, version.source.source_path, version.source.locator,
+                         version.observation_only)))
         supports = tuple(sorted({version.source for version in versions}, key=lambda source:
                          (source.source_path, source.locator, source.evidence_id, source.available_at)))
         return IdentityResolution("RESOLVED", (user,),
