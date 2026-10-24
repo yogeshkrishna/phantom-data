@@ -3,7 +3,7 @@ import json
 import time
 from pathlib import Path
 
-from phantom.contracts import OUTPUT_COLUMNS, STEP_COLUMNS, to_csv_row
+from phantom.contracts import OUTPUT_COLUMNS, STEP_COLUMNS, to_csv_row, parse_instant
 from phantom.corpus import read_csv_table
 from phantom.metrics import compare_rows
 from phantom.pipeline import audit_request, prepare
@@ -41,6 +41,27 @@ def evaluate(dataset_dir: Path, cache_dir: Path, report_path: Path):
     outcome=dict(metrics=metrics,blocked=blocked,errors=errors,custom=custom,
                  preparation_seconds=preparation_seconds,audit_seconds=audit_seconds,
                  context=context,predictions=predictions)
+    by_case={r['case_id']:r for r in requests}
+    traces=[]
+    for error in errors:
+        expected_resources={(s['system_id'],s['resource_id']) for s in error['expected']}
+        actual_resources={(s['system_id'],s['resource_id']) for s in error['actual']}
+        for system,resource in sorted(expected_resources ^ actual_resources):
+            cutoff=parse_instant(by_case[error['case_id']]['audit_at'])
+            candidates=[f for f in context.states.facts if f.entity.system_id==system and f.entity.resource_id==resource
+                        and parse_instant(f.observed_at)<=cutoff and parse_instant(f.source.available_at)<=cutoff]
+            candidates.sort(key=lambda f:parse_instant(f.observed_at),reverse=True)
+            sources=[]
+            for fact in candidates:
+                description=f'{fact.source.evidence_id}:{fact.source.locator} ({fact.kind}/{fact.state})'
+                if description not in sources:sources.append(description)
+                if len(sources)==3:break
+            traces.append(dict(case_id=error['case_id'],system=system,resource=resource,
+                  difference='additional supported resource' if (system,resource) in actual_resources else 'missing expected subject link',
+                  sources='; '.join(sources) or 'No visible normalized record for this resource'))
+    outcome['traces']=traces
+    from .ablation import measure_ablations
+    outcome['ablations']=measure_ablations(context,requests,expected)
     write_report(outcome,report_path)
     return outcome
 
@@ -65,8 +86,19 @@ def write_report(outcome,path):
     lines.extend(['','## Error inventory','', '| Case | Expected / actual status | Steps expected / actual | Diagnosis |','|---|---|---|---|'])
     for error in outcome['errors']:
         lines.append(f"| {error['case_id']} | {error['expected_status']} / {error['actual_status']} | {error['expected_steps']} / {error['actual_steps']} | {error['reason']} |")
+    lines.extend(['','### Visible source traces for resource-set disagreements','',
+      'These evaluation-only lookups use expected resource IDs solely to diagnose missing/extra output after prediction. They never create production identity edges. A visible readback with no subject selector or supported history cannot be assigned by numeric suffix or event proximity.', '',
+      '| Case | Resource | Difference | Latest visible sources |','|---|---|---|---|'])
+    for trace in outcome.get('traces',()):
+        lines.append(f"| {trace['case_id']} | {trace['system']}/{trace['resource']} | {trace['difference']} | {trace['sources']} |")
     lines.extend(['','## Boundaries and improvements','',
       'Local OCR/model-derived evidence uses the same cutoff, scope and policy verifier as structured evidence. Raw extraction/cache data and model weights remain outside the submitted source. No paid API is used.', '',
       'Regression checks cover added PII, enabled connectors, unavailable future captures, missing retained records and forged citations. Earlier fixes include per-store state, partial-field preservation, query/payload separation and concurrent Windows cache writes.', '',
-      'Remaining mismatches require source-level error analysis in stage12. No predictions were edited to match labels. A complete 518-row submission has not yet been demonstrated.'])
+      'Stage12 source analysis and remaining ambiguities are recorded in error_analysis.md. No predictions were edited to match labels. A complete 518-row submission has not yet been demonstrated.'])
+    lines.extend(['','## Measured ablations','',
+       'Same visible32 requests, same expected rows and independent verifier. Deliberately weakened baselines exist only in evaluation/ablation.py. Times include index rebuilding and audits, exclude shared source/OCR preparation.', '',
+       '| Variant | Status accuracy | Exact row | Step F1 | Predictions | Blocked | Seconds |','|---|---|---|---|---|---|---|'])
+    for item in outcome.get('ablations',()):
+        m=item['metrics'];lines.append(f"| {item['name']} | {m['status_accuracy']:.6f} | {m['case_exact_accuracy']:.6f} | {m['step_f1']:.6f} | {m['predicted_cases']} | {item['blocked']} | {item['seconds']:.3f} |")
+    lines.extend(['','The image removal isolates neural screenshot facts; PDF text layers remain. Better or worse sample metrics under a removal do not establish hidden-test benefit. Additional supported records absent from a canonical row can reduce exact-match scores.'])
     path.parent.mkdir(parents=True,exist_ok=True);path.write_text('\n'.join(lines)+'\n',encoding='utf-8')

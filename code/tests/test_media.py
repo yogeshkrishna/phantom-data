@@ -57,6 +57,11 @@ class MediaTests(unittest.TestCase):
         links = [fact({}, kind="identity", resource=r, metadata={"resource_aliases": ("external",)}) for r in ('one','two')]
         self.assertEqual(_bind(media, links).entity.resource_id, "external")
 
+    def test_redundant_catalog_identity_does_not_delay_self_identified_record(self):
+        media=fact({'user_id':'u','email':'a@example.test'},A,source=replace(SOURCE,available_at=A))
+        link=fact({},B,kind='identity',metadata={'resource_aliases':('opaque',)})
+        self.assertEqual(_bind(media,[link]).source.available_at,A)
+
     def test_missing_ocr_runtime_is_explicit(self):
         with patch.dict('sys.modules', {'rapidocr': None}):
             with self.assertRaises(RuntimeError):

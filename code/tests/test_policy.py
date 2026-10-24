@@ -108,7 +108,7 @@ class PolicyTests(unittest.TestCase):
     def test_blocked_restore_alone_does_not_prove_archive_available(self):
         obligations = evaluate("BACKUP_ARCHIVE", {}, "BLOCKED", query_identifiers={"user_id": ("u",)})
         self.assertIsNone(obligations[0].compliant)
-        self.assertTrue(obligations[1].compliant)
+        self.assertEqual(obligations[0].verification,"VERIFY_RESTORE_BLOCKED")
 
     def test_explicit_restore_conflict_is_unknown(self):
         o = evaluate("BACKUP_ARCHIVE", {"user_id": "u", "restore_allowed": True}, "BLOCKED")[-1]

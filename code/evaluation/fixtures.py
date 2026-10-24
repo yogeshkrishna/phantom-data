@@ -91,7 +91,6 @@ def cases():
              sources=[('retained',C,bundle(snapshot('security_service','security_audit_events',[dict(resource_id='opaque-audit',subject_reference='subject',retention_until='2030-01-01T00:00:00Z')]),
                  snapshot('backup_service','backup_catalog',[dict(resource_id='opaque-archive',subject_reference='subject',archive_key='archive/object.zst',restore_allowed=False)])))],
              expected=expected('retention_and_blocked_restore','COMPLETE',[
-                 ('VERIFICATION','backup_service','opaque-archive','VERIFY_RECORD_PRESENT','PRESENT','retained'),
                  ('VERIFICATION','security_service','opaque-audit','VERIFY_RECORD_PRESENT','PRESENT','retained'),
                  ('VERIFICATION','backup_service','opaque-archive','VERIFY_RESTORE_BLOCKED','BLOCKED','retained')])),
     ]

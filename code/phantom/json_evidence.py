@@ -137,8 +137,13 @@ class _Builder:
                 raise ValueError("active risk on unrelated record")
             if state == "BLOCKED" and category != "BACKUP_ARCHIVE":
                 raise ValueError("restore state on unrelated record")
+        fields = {}
+        if kind == "state" and category == "DATA_FLOW" and state in {"ACTIVE", "DISABLED"}:
+            fields["enabled"] = state == "ACTIVE"
+        if kind == "state" and category == "BACKUP_ARCHIVE" and state in {"ACTIVE", "BLOCKED"}:
+            fields["restore_allowed"] = state == "ACTIVE"
         self.fact(system, row.get("resource_id"), category, row.get("recorded_at"),
-                  pointer, state=state, queries=queries, metadata=metadata, kind=kind,
+                  pointer, fields=fields, state=state, queries=queries, metadata=metadata, kind=kind,
                   store=row.get("store_id"))
 
     def service(self, system, group, row, pointer, region):

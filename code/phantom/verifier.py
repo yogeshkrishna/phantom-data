@@ -71,10 +71,15 @@ def _requirements(resource, view, rule):
         return [("VERIFY_RECORD_ABSENT", compliance, "REPORT_REMAINING_RECORD" if exists and not shared else None,
                  "DELETE_RECORD" if exists and not shared else None, latest_ids)]
     if action in {"REDACT", "ANONYMIZE"}:
-        unsafe = _unsafe(resource, view.identity, resource.category == "ACCOUNT_TOMBSTONE",
+        unsafe = _unsafe(resource, view.identity, resource.category in {"ACCOUNT_TOMBSTONE", "SUPPORT_MESSAGE"},
                          resource.category == "EMAIL_DELIVERY_LOG")
         target = "REDACTED" if action == "REDACT" else "ANONYMIZED"
-        coverage = (resource.state == target or {"name", "email", "phone", "email_hash"} <=
+        required = {"name", "email", "phone", "email_hash"}
+        if resource.category == "SUPPORT_MESSAGE":
+            required = {"name", "email", "phone"}
+        elif action == "ANONYMIZE":
+            required = {"email", "phone", "email_hash"}
+        coverage = (resource.state == target or required <=
                     {FIELD_ALIASES.get(k) for k in fields} or
                     bool(resource.latest) and all(f.metadata.get("full_record") is True for f in resource.latest))
         invalid_tombstone = resource.category == "ACCOUNT_TOMBSTONE" and any(str(v).upper() != "DELETED" for v in fields["account_status"])
@@ -106,7 +111,8 @@ def _requirements(resource, view, rule):
     if unsafe:
         requirements.append(("VERIFY_RECORD_REDACTED", False, "REPORT_EXPOSED_PII", "REDACT_RECORD", proof))
     if resource.category == "BACKUP_ARCHIVE":
-        requirements.append(risk)
+        check, compliance, finding, remediation, citations = risk
+        return [(check, compliance if good is True else None, finding, remediation, citations)]
     return requirements
 
 

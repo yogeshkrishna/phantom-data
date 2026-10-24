@@ -39,6 +39,8 @@ def _bind(fact, context):
     owners = {(f.entity, f.source.available_at) for f in matches}
     if len({entity for entity, _ in owners}) == 1:
         support = min(matches, key=lambda f: parse_instant(f.source.available_at))
+        if support.entity == fact.entity:
+            return fact  # The visible record already supplies this exact key.
         available = max((fact.source.available_at, support.source.available_at), key=parse_instant)
         return replace(fact, entity=support.entity, source=replace(fact.source, available_at=available),
                        metadata={**fact.metadata, "binding_evidence_id": support.source.evidence_id,

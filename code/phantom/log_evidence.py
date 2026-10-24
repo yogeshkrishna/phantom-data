@@ -167,6 +167,10 @@ def event_fact(timestamp, data, source, queries=None):
     if event == "record_lookup":
         state = READBACK_STATES[data["result"]]
         metadata["readback_result"] = data["result"]
+        if category == "DATA_FLOW" and state in {"ACTIVE", "DISABLED"}:
+            fields["enabled"] = state == "ACTIVE"
+        if category == "BACKUP_ARCHIVE" and state in {"ACTIVE", "BLOCKED"}:
+            fields["restore_allowed"] = state == "ACTIVE"
     if event == "profile_lookup_completed":
         if str(data.get("rows")) not in {"0", "1"} or str(data.get("http_status")) not in {"200", "404"}:
             raise ValueError("unsupported profile response")

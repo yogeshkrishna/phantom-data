@@ -1,6 +1,7 @@
 """Evaluation penalizes missing output and never loads labels before prediction."""
 import sys
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -17,6 +18,23 @@ from test_policy import rules
 
 
 class EvaluationTests(unittest.TestCase):
+    def test_replica_ablation_exposes_a_semantic_regression(self):
+        from evaluation.ablation import measure_ablations
+        from test_pipeline import prepared,request
+        from test_state import fact,B
+        context=prepared([fact(),fact({},B,'ABSENT'),fact(store='replica')])
+        # Explicit expected steps are independent of either measured planner run.
+        expected=to_csv_row(AuditResult('synthetic','INCOMPLETE',(
+            AuditStep(1,'FINDING','service','opaque','REPORT_REMAINING_RECORD','PRESENT','file-01'),
+            AuditStep(2,'REMEDIATION','service','opaque','DELETE_RECORD','ABSENT',''),
+            AuditStep(3,'VERIFICATION','service','opaque','VERIFY_RECORD_ABSENT','ABSENT',''))))
+        context=replace(context,tables={**context.tables,
+            'user_identities':[dict(user_id='u',name='Person',email='a@example.test',phone='123',email_hash='hash',updated_at='2026-01-01T00:00:00Z')],
+            'user_audit_log':[]})
+        results={r['name']:r for r in measure_ablations(context,[request()],[expected])}
+        self.assertEqual(results['full']['metrics']['case_exact_accuracy'],1)
+        self.assertEqual(results['without_replicas']['metrics']['status_accuracy'],0)
+
     def test_all_independent_filesystem_cases_and_mutations(self):
         results=run_custom_cases(rules())
         self.assertGreaterEqual(len(results),5)

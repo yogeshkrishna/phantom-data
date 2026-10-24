@@ -137,8 +137,8 @@ class PolicyEngine:
                                remediation="DELETE_RECORD" if present else None,
                                verification="VERIFY_RECORD_ABSENT", proofs=proofs, reasons=tuple(reasons)),)
         if rule.action in {"REDACT", "ANONYMIZE"}:
-            allow_stable = resource.category == "ACCOUNT_TOMBSTONE"
-            if allow_stable and any(str(value).upper() != "DELETED" for value in _values(resource, "account_status")):
+            allow_stable = resource.category in {"ACCOUNT_TOMBSTONE", "SUPPORT_MESSAGE"}
+            if resource.category == "ACCOUNT_TOMBSTONE" and any(str(value).upper() != "DELETED" for value in _values(resource, "account_status")):
                 reasons.append("TOMBSTONE_CONDITION_UNPROVEN")
             pii = exposed_fields(resource, view, allow_stable=allow_stable,
                                  email_only=resource.category == "EMAIL_DELIVERY_LOG")
@@ -146,7 +146,12 @@ class PolicyEngine:
             known_treatment = resource.state == target
             # Explicit readback of treatment is evidence; an empty generic object is not.
             covered_identifiers = {FIELD_ALIASES.get(path[-1]) for path, _, _ in _field_values(resource)}
-            coverage = known_treatment or {"name", "email", "phone", "email_hash"} <= covered_identifiers or (
+            required = {"name", "email", "phone", "email_hash"}
+            if resource.category == "SUPPORT_MESSAGE":
+                required = {"name", "email", "phone"}
+            elif rule.action == "ANONYMIZE":
+                required = {"email", "phone", "email_hash"}
+            coverage = known_treatment or required <= covered_identifiers or (
                 bool(resource.latest) and all(f.metadata.get("full_record") is True for f in resource.latest))
             compliant = False if pii else True if present and coverage else None
             if absent:
@@ -199,7 +204,11 @@ class PolicyEngine:
                                      "REPORT_EXPOSED_PII", "REDACT_RECORD", "VERIFY_RECORD_REDACTED",
                                      _proofs([fact for _, fact in pii]), ("PRESERVE_RETAINED_RECORD",)))
         if resource.category == "BACKUP_ARCHIVE":
-            result.append(self._risk(resource, "RESTORE", rule.rule_id))
+            risk = self._risk(resource, "RESTORE", rule.rule_id)
+            # The restore verification enforces BOTH archive presence and blocking.
+            from dataclasses import replace
+            good = risk.compliant if retain.compliant is True else None
+            return (replace(risk, compliant=good, reasons=tuple(sorted(set(risk.reasons + retain.reasons)))),)
         return tuple(result)
 
     @staticmethod

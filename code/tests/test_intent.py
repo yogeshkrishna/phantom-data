@@ -68,6 +68,17 @@ class IntentTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             classify_intent(None)
 
+    def test_personal_erasure_audit_and_continuation_paraphrases(self):
+        for text in ("I am deleting my account. Verify that all copies are gone.",
+                     "I deleted my account. Please check the old addresses for leftovers.",
+                     "My profile is gone. Could you remove that search result?",
+                     "Please close the account completely and stop copying my data.",
+                     "Please remove my name and contact details from retained records.",
+                     "Please verify that my profile was deleted.",
+                     "Intenté eliminar mi cuenta. ¿Pueden completar la eliminación?"):
+            with self.subTest(text=text):
+                self.assertEqual(classify_intent(text).authorization,"REQUESTED")
+
 
 if __name__ == "__main__":
     unittest.main()

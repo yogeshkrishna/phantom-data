@@ -54,7 +54,8 @@ class JsonEvidenceTests(unittest.TestCase):
             with self.subTest(state=state):
                 batch = normalize_json(history(record_type=category, system=system, result=state), SOURCE)
                 self.assertEqual(batch.facts[0].state, state)
-                self.assertEqual(batch.facts[0].field_coverage, ())
+                expected = ("enabled",) if category == "DATA_FLOW" else ("restore_allowed",) if category == "BACKUP_ARCHIVE" else ()
+                self.assertEqual(batch.facts[0].field_coverage, expected)
 
     def test_bundle_history_and_regular_records_separate(self):
         document = {"exported_at": SOURCE.available_at, "snapshots": [
