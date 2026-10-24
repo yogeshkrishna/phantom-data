@@ -88,3 +88,30 @@ state; policy/planning/verifier; logs/text/media; compiler/cache/CLI; evaluation
 final measured run and clean packaging. No full audit CLI exists yet.
 
 Stage 01 verified: 171 tests passed, zero skips; real integration again covered 113 regular snapshots and 361 facts with unchanged source hashes. Locator validation and timestamp error privacy repaired.
+
+## Stage 02: JSON evidence
+
+`phantom.json_evidence` adds these immutable result types and APIs:
+
+```python
+EvidenceDiagnostic(code: str, source: EvidenceRef, detail: str)
+EvidenceBatch(layout: str, facts: tuple[EvidenceFact, ...],
+              scopes: tuple[SnapshotScope, ...],
+              diagnostics: tuple[EvidenceDiagnostic, ...],
+              records_seen: int, records_normalized: int)
+normalize_json(document: object, source: EvidenceRef) -> EvidenceBatch
+read_json_evidence(entry: ManifestEntry) -> EvidenceBatch
+```
+
+All four supplied root layouts are supported. Real integration: 28 files,
+890 source records normalized to 890 facts and 58 query-scoped search responses;
+zero diagnostics, unchanged hashes. No regular empty inventory becomes absence.
+Readback query values stay in `query_identifiers` under their original field names
+(`lookup_value`, `subject_reference`, `query`); they never become stored PII.
+Workflow rows containing `operation`/`event_type` are claims. Treatment readbacks
+retain their assertion in metadata with no invented stored fields/coverage.
+ACTIVE can denote a connector or archive restore risk; category disambiguates it.
+Search scopes cover only their explicit query, never the global collection.
+Per-record failures roll back partial facts and produce source-located diagnostics.
+Optional real tests use `PHANTOM_DATASET` or the local reference checkout;
+they never open sample outputs. Next: semantic SQL and historical identities.
