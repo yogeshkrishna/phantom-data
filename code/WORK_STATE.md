@@ -140,3 +140,53 @@ The adapter supports a future explicit `complete=1` declaration for exact domain
 scopes, with malformed rows downgrading completeness. This is exercised only by
 independent synthetic fixtures; no supplied scope was upgraded heuristically.
 Next: request authorization and source-grounded historical identity reconstruction.
+
+## Stage 04: authorization and historical identifiers
+
+```python
+# phantom.intent
+IntentDecision(authorization: Literal['REQUESTED', 'NOT_REQUESTED', 'AMBIGUOUS'],
+               reason: str, language: str | None = None)
+classify_intent(request_text: str) -> IntentDecision
+# phantom.identities
+IdentitySupport(evidence_id: str, source_path: str, locator: str, available_at: str)
+IdentityVersion(user_id: str, field: str, value: str, effective_from: str | None,
+                effective_until: str | None, source: IdentitySupport)
+IdentityResolution(status: str, user_ids: tuple[str, ...], identifiers: IdentifierMap,
+                   current: dict[str, str], versions: tuple[IdentityVersion, ...],
+                   supports: tuple[IdentitySupport, ...], issues: tuple[str, ...])
+normalize_identifier(field: str, value: str) -> str
+IdentityIndex(identities: Sequence[dict[str, str]], audits: Sequence[dict[str, str]],
+              facts: Sequence[EvidenceFact] = ())
+IdentityIndex.resolve(email: str, audit_at: str, *,
+                      requested_at: str | None = None) -> IdentityResolution
+```
+
+Intent uses language-level explicit consent patterns for EN/FR/ES/PT/JA/KO,
+quote/negation/withdrawal/information checks, and AMBIGUOUS for unclear consent.
+No status claim or participant ID is used. The later model stage may assist
+ambiguous requests; no runtime model calls were added in these four stages.
+
+Identity resolution keeps exact original aliases, source-supported transition
+intervals, unknown interval starts and current fields separately. Future audit,
+current-row and capture evidence is excluded at each cutoff. Current CSV row
+supports have empty evidence IDs rather than fabricated output citations.
+Visible audit IDs and file IDs are retained. Explicit user IDs and direct fields
+in the same stored object can establish edges; names, query-only values, adjacent
+records and numeric suffixes cannot. Current values are not backdated before
+their observation. Inconsistent audit chains and same-time field conflicts are
+diagnosed; ambiguous owners are never unioned. Ownership windows can resolve
+explicit email reuse at requested_at using only evidence visible by audit_at.
+
+Real structured-source integration covers all 518 request identity lookups.
+Intent distribution: 508 explicit erasure requests (446 EN, 14 PT, 12 each
+FR/ES/JA/KO), 10 non-deletion requests, zero ambiguous texts in this supplied set.
+All 518 obtain a unique supported subject link; 94 use a historical email alias.
+One same-time email field conflict across SQL stores remains explicitly flagged,
+with no arbitrary current email selected. This is coverage, NOT verdict accuracy.
+Index construction plus all 518 identity resolutions measured 0.282 seconds on
+this machine; it is NOT full audit runtime or a promised benchmark elsewhere.
+
+All 219 tests pass, including optional real integrations. No sample answer files
+were loaded. Next is Prompt 05, temporal resource linking/reconstruction; policy,
+planner, verifier, CLI and complete log/media interpretation remain unimplemented.
