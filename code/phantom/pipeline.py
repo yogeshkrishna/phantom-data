@@ -11,6 +11,8 @@ from .identities import IdentityIndex
 from .intent import classify_intent
 from .json_evidence import EvidenceDiagnostic, read_json_evidence
 from .log_evidence import read_log_evidence
+from .local_model import LocalOCR
+from .media_evidence import read_media_evidence
 from .planner import AuditBlocked, plan
 from .policy import PolicyEngine
 from .sql_evidence import read_sql_evidence
@@ -29,9 +31,10 @@ class PreparedAudit:
     diagnostics: tuple[EvidenceDiagnostic, ...]
     files_attempted: int
     files_supported: int
+    model_usage: dict | None = None
 
 
-def prepare(dataset_dir: Path) -> PreparedAudit:
+def prepare(dataset_dir: Path, *, media_cache: Path | None = None) -> PreparedAudit:
     activity_digest = hashlib.sha256((dataset_dir / "system_activity.csv").read_bytes()).hexdigest()
     tables = load_tables(dataset_dir)
     if hashlib.sha256((dataset_dir / "system_activity.csv").read_bytes()).hexdigest() != activity_digest:
@@ -39,9 +42,13 @@ def prepare(dataset_dir: Path) -> PreparedAudit:
     entries = read_manifest(dataset_dir)
     facts, scopes, diagnostics = [], [], []
     supported = 0
+    media = []
     readers = {".json": read_json_evidence, ".sql": read_sql_evidence,
                ".log": read_log_evidence, ".txt": read_text_evidence}
     for entry in entries:
+        if entry.path.suffix.lower() in {".pdf", ".png", ".jpg", ".jpeg"}:
+            media.append(entry)
+            continue
         reader = readers.get(entry.path.suffix.lower())
         if reader is None:
             diagnostics.append(EvidenceDiagnostic("UNSUPPORTED_EVIDENCE", EvidenceRef(
@@ -56,9 +63,16 @@ def prepare(dataset_dir: Path) -> PreparedAudit:
     activity = normalize_activity(tables["system_activity"], activity_digest, facts)
     facts.extend(activity.facts)
     diagnostics.extend(activity.diagnostics)
+    ocr = LocalOCR(media_cache if media_cache is not None else Path(".cache/ocr"))
+    for entry in media:
+        batch = read_media_evidence(entry, ocr, facts)
+        supported += 1
+        facts.extend(batch.facts)
+        scopes.extend(batch.scopes)
+        diagnostics.extend(batch.diagnostics)
     return PreparedAudit(tables, IdentityIndex(tables["user_identities"], tables["user_audit_log"], facts),
                          StateIndex(facts, scopes), PolicyEngine(tables["deletion_rules"]),
-                         tuple(diagnostics), len(entries), supported)
+                         tuple(diagnostics), len(entries), supported, ocr.usage() if media else None)
 
 
 def audit_request(prepared: PreparedAudit, request: dict[str, str]) -> AuditResult:
