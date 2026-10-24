@@ -85,6 +85,18 @@ class TemporalTests(unittest.TestCase):
         resource = self.view(fact({}, query_identifiers={"email": ("a@example.test",)})).resources[0]
         self.assertFalse(resource.fields)
 
+    def test_untyped_lookup_supports_phone_and_hash(self):
+        for field, value in (("phone", "123"), ("email_hash", "hash")):
+            # Typed selector fields remain authoritative even for nonstandard synthetic hashes.
+            resource = self.view(fact({}, query_identifiers={field: (value,)})).resources[0]
+            self.assertFalse(resource.fields)
+
+    def test_same_logical_resource_links_clean_replica_without_merging_fields(self):
+        replica = fact({"email": None}, B, "ANONYMIZED", store="replica")
+        view = self.view(fact(), replica)
+        self.assertEqual(len(view.resources), 2)
+        self.assertEqual(view.resources[1].fields[0].value, None)
+
     def test_claim_does_not_erase_state(self):
         resource = self.view(fact(), fact({}, B, "ABSENT", kind="claim")).resources[0]
         self.assertEqual(resource.state, "PRESENT")

@@ -129,7 +129,7 @@ class IdentityIndex:
         self._fact_observations = defaultdict(list)
         for fact in self._facts:
             observed, available = _instant(fact.observed_at), _instant(fact.source.available_at)
-            if fact.kind != "state" or fact.state not in {"PRESENT", "REDACTED", "ANONYMIZED"}:
+            if not (fact.kind == "identity" or fact.kind == "state" and fact.state in {"PRESENT", "REDACTED", "ANONYMIZED"}):
                 continue
             source = IdentitySupport(fact.source.evidence_id, fact.source.source_path,
                                      fact.source.locator, fact.source.available_at)

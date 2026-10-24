@@ -105,6 +105,11 @@ class PolicyTests(unittest.TestCase):
     def test_unknown_boolean_is_not_disabled(self):
         self.assertIsNone(evaluate("DATA_FLOW", {"user_id": "u", "enabled": "false"})[0].compliant)
 
+    def test_blocked_restore_alone_does_not_prove_archive_available(self):
+        obligations = evaluate("BACKUP_ARCHIVE", {}, "BLOCKED", query_identifiers={"user_id": ("u",)})
+        self.assertIsNone(obligations[0].compliant)
+        self.assertTrue(obligations[1].compliant)
+
     def test_explicit_restore_conflict_is_unknown(self):
         o = evaluate("BACKUP_ARCHIVE", {"user_id": "u", "restore_allowed": True}, "BLOCKED")[-1]
         self.assertIsNone(o.compliant)

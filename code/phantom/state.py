@@ -12,6 +12,18 @@ STABLE_FIELDS = {"user_id", "customer_reference", "subject_reference", "customer
 SELECTOR_FIELDS = {"query", "lookup_value", "subject_selector", "uploaded_by"}
 
 
+def _reference_field(key, value):
+    if key in {"user_id", "customer_id"}:
+        return "user_id"
+    if "@" in value:
+        return "email"
+    if re.fullmatch(r"[a-fA-F0-9]{64}", value):
+        return "email_hash"
+    if re.fullmatch(r"\+?[\d ()-]{7,}", value):
+        return "phone"
+    return "user_id"
+
+
 def leaves(value, path=()):
     """Yield field paths and scalar values; never execute embedded content."""
     if isinstance(value, dict):
@@ -29,7 +41,7 @@ def identifier_tokens(fields):
         if not isinstance(value, str) or not value.strip():
             continue
         key = path[-1] if path else ""
-        field = ("email" if "@" in value else "user_id") if key in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(key)
+        field = _reference_field(key, value) if key in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(key)
         if field and field != "name":
             yield field, normalize_identifier(field, value)
 
@@ -72,16 +84,26 @@ class StateIndex:
         self._by_entity = defaultdict(list)
         self._tokens = defaultdict(set)
         self._scopes = defaultdict(list)
+        self._reference_edges = defaultdict(list)
+        self._logical_entities = defaultdict(set)
+        self._logical_claims = defaultdict(list)
         for fact in self.facts:
             parse_instant(fact.observed_at)
             parse_instant(fact.source.available_at)
             self._by_entity[fact.entity].append(fact)
+            logical = fact.entity.system_id, fact.entity.resource_id
+            self._logical_entities[logical].add(fact.entity)
+            if fact.kind == "claim":
+                self._logical_claims[logical].append(fact)
+            for reference in fact.references:
+                self._reference_edges[fact.entity].append((reference, fact))
+                self._reference_edges[reference].append((fact.entity, fact))
             for token in identifier_tokens(fact.stored_fields):
                 self._tokens[token].add(fact.entity)
             for field, values in fact.query_identifiers.items():
                 if field != "name":
                     for value in values:
-                        canonical = ("email" if "@" in value else "user_id") if field in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(field, field)
+                        canonical = _reference_field(field, value) if field in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(field, field)
                         self._tokens[canonical, normalize_identifier(canonical, value)].add(fact.entity)
             # Free-text matching uses a separate exact boundary check at resolve.
             for _, value in leaves(fact.stored_fields):
@@ -107,7 +129,7 @@ class StateIndex:
             return True
         for field, values in fact.query_identifiers.items():
             for value in values:
-                canonical = ("email" if "@" in value else "user_id") if field in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(field, field)
+                canonical = _reference_field(field, value) if field in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(field, field)
                 if (canonical, normalize_identifier(canonical, value)) in aliases:
                     return True
         for _, value in leaves(fact.stored_fields):
@@ -132,24 +154,31 @@ class StateIndex:
         linked = {entity for entity in candidates if any(self._visible(fact, cutoff) and
                   self._matches(fact, identity, aliases) for fact in self._by_entity[entity])}
         # An explicit resource reference preserves historical association. No ID arithmetic.
-        changed = True
-        while changed:
-            changed = False
-            for entity, facts in self._by_entity.items():
-                for fact in facts:
-                    if not self._visible(fact, cutoff):
-                        continue
-                    connected = entity in linked or any(ref in linked for ref in fact.references)
-                    if connected:
-                        for key in (entity, *fact.references):
-                            if key in self._by_entity and key not in linked:
-                                linked.add(key)
-                                changed = True
+        pending = list(linked)
+        while pending:
+            entity = pending.pop()
+            # Equal service/resource IDs explicitly name the same logical record;
+            # its physical stores remain separate reconstruction obligations.
+            for neighbor in self._logical_entities[entity.system_id, entity.resource_id]:
+                if neighbor not in linked and any(self._visible(f, cutoff) for f in self._by_entity[neighbor]):
+                    linked.add(neighbor)
+                    pending.append(neighbor)
+            for neighbor, support in self._reference_edges.get(entity, ()):
+                if neighbor in self._by_entity and neighbor not in linked and self._visible(support, cutoff):
+                    linked.add(neighbor)
+                    pending.append(neighbor)
+        # A claim with no physical store declaration is not an invented extra copy.
+        has_state = {(entity.system_id, entity.resource_id) for entity in linked
+                     if any(f.kind == "state" and self._visible(f, cutoff) for f in self._by_entity[entity])}
+        linked = {entity for entity in linked if (entity.system_id, entity.resource_id) not in has_state or
+                  any(f.kind == "state" and self._visible(f, cutoff) for f in self._by_entity[entity])}
         resources = tuple(self._reconstruct(entity, cutoff, identity, aliases) for entity in sorted(linked, key=_key))
         return StateView(audit_at, identity, resources, tuple(sorted({issue for item in resources for issue in item.issues})))
 
     def _reconstruct(self, entity, cutoff, identity, aliases):
         history = [fact for fact in self._by_entity[entity] if self._visible(fact, cutoff)]
+        history.extend(fact for fact in self._logical_claims[entity.system_id, entity.resource_id]
+                       if fact.entity != entity and self._visible(fact, cutoff))
         observations = [fact for fact in history if fact.kind == "state"]
         category_set = {fact.category for fact in history if fact.category != "UNKNOWN"}
         issues = set()
@@ -207,7 +236,17 @@ class StateIndex:
         if any(len({repr(item.value) for item in values}) > 1 for values in fields.values()):
             current_issues.add("CONFLICTING_FIELD_READBACKS")
         current_issues.update(issues & {"CATEGORY_CONFLICT", "UNKNOWN_CATEGORY", "COVERAGE_WITHOUT_VALUE"})
+        latest_time = max(groups)
+        writes = {"UPDATE_RECORD", "SYNC_RECORD", "INDEX_RECORD", "CREATE_EXPORT", "RESTORE_BACKUP", "REFRESH_CACHE"}
+        if any(fact.kind == "claim" and fact.metadata.get("event_type") in writes and
+               fact.metadata.get("reported_result") == "SUCCESS" and parse_instant(fact.observed_at) >= latest_time
+               for fact in history):
+            current_issues.add("UNVERIFIED_LATER_WRITE")
         state = next(iter(states)) if len(states) == 1 else "CONFLICT"
+        latest_owners = {value for fact in latest for field, value in identifier_tokens(fact.stored_fields)
+                         if field == "user_id"}
+        if latest_owners and not latest_owners.intersection(identity.user_ids):
+            current_issues.add("RESOURCE_OWNERSHIP_CONFLICT")
         return ResourceState(entity, category, state, latest,
                              tuple(item for field in sorted(fields) for item in fields[field]),
                              tuple(sorted(history, key=lambda f: (parse_instant(f.observed_at), f.source.source_path, f.source.locator))),

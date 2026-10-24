@@ -108,3 +108,8 @@ class PipelineTests(unittest.TestCase):
     def test_unknown_not_fabricated_into_incomplete_or_complete(self):
         with self.assertRaises(AuditBlocked):
             audit_request(prepared([fact({}, query_identifiers={"user_id": ("u",)}, category="SUPPORT_MESSAGE")]), request())
+
+    def test_reassigned_resource_does_not_authorize_deleting_another_owner(self):
+        context = prepared([fact(), fact({"user_id": "other", "email": "other@example.test"}, B)])
+        with self.assertRaisesRegex(AuditBlocked, "RESOURCE_OWNERSHIP_CONFLICT"):
+            audit_request(context, request())

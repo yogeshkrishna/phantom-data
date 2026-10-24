@@ -51,6 +51,9 @@ def exposed_fields(resource: ResourceState, view: StateView, *, allow_stable=Fal
     Redaction markers/null are not by themselves a proof that an omitted field cleared.
     """
     found = []
+    for fact in resource.latest:
+        if fact.metadata.get("pii_detected") is True or fact.metadata.get("readback_result") == "IDENTIFIABLE":
+            found.append(((), fact))
     markers = {"", "[redacted]", "redacted", "[removed]", "anonymous", "anonymized"}
     aliases = [(field, normalize_identifier(field, value)) for field, values in view.identity.identifiers.items()
                for value in values if value and field != "name"]
@@ -157,6 +160,15 @@ class PolicyEngine:
                                proofs=_proofs([fact for _, fact in pii]) if pii else proofs,
                                reasons=tuple(reasons)),)
         # RETAIN: never infer deletion authority from expiry or a missing condition.
+        retained_present = present
+        presence_proofs = proofs
+        if resource.category == "BACKUP_ARCHIVE" and resource.state in {"BLOCKED", "ACTIVE"}:
+            archive_fields = [field for field in resource.fields if field.field in {"archive_key", "archive_path"}
+                              and isinstance(field.value, str) and bool(field.value)]
+            retained_present = bool(archive_fields) or any(value is True for value in _values(resource, "archive_present"))
+            presence_proofs = _proofs([field.fact for field in archive_fields]) or proofs
+            if not retained_present:
+                reasons.append("ARCHIVE_PRESENCE_UNPROVEN")
         if resource.category in {"SECURITY_AUDIT_LOG", "LEGAL_HOLD_RECORD"}:
             key = "retention_until" if resource.category == "SECURITY_AUDIT_LOG" else "retained_until"
             dates = _values(resource, key)
@@ -179,7 +191,7 @@ class PolicyEngine:
                             any(reason != "RETAINED_RECORD_EXPOSES_DIRECT_PII" for reason in reasons) else None,
                             finding="REPORT_EXPOSED_PII" if pii else None,
                             remediation="REDACT_RECORD" if pii else None,
-                            verification="VERIFY_RECORD_PRESENT", proofs=_proofs([fact for _, fact in pii]) if pii else proofs,
+                            verification="VERIFY_RECORD_PRESENT", proofs=_proofs([fact for _, fact in pii]) if pii else presence_proofs,
                             reasons=tuple(reasons))
         result = [retain]
         if pii:

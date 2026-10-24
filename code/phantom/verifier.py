@@ -17,7 +17,8 @@ class VerificationReport:
 
 
 def _unsafe(resource, identity, allow_stable=False, email_only=False):
-    facts = []
+    facts = [fact for fact in resource.latest if fact.metadata.get("pii_detected") is True or
+             fact.metadata.get("readback_result") == "IDENTIFIABLE"]
     for field in resource.fields:
         for path, value in leaves(field.value, (field.field,)):
             if not isinstance(value, str) or value.strip().casefold() in {
@@ -84,6 +85,11 @@ def _requirements(resource, view, rule):
     if action != "RETAIN":
         return [("VERIFY_RECORD_PRESENT", None, None, None, set())]
     unsafe = [] if resource.category == "BACKUP_ARCHIVE" else _unsafe(resource, view.identity, True)
+    if resource.category == "BACKUP_ARCHIVE" and resource.state in {"BLOCKED", "ACTIVE"}:
+        archive_fields = [field for field in resource.fields if field.field in {"archive_key", "archive_path"}
+                          and isinstance(field.value, str) and bool(field.value)]
+        exists = bool(archive_fields) or any(v is True for v in fields["archive_present"])
+        latest_ids = {field.fact.source.evidence_id for field in archive_fields} or latest_ids
     condition = True
     if resource.category in {"SECURITY_AUDIT_LOG", "LEGAL_HOLD_RECORD"}:
         key = "retention_until" if resource.category == "SECURITY_AUDIT_LOG" else "retained_until"
@@ -124,6 +130,8 @@ def verify_result(result: AuditResult, request, identity_index, state_index, pol
     if identity.status != "RESOLVED":
         return VerificationReport(False, ("UNRESOLVED_IDENTITY",))
     view = state_index.resolve(identity, request["audit_at"])
+    if "RESOURCE_OWNERSHIP_CONFLICT" in view.issues:
+        return VerificationReport(False, ("RESOURCE_OWNERSHIP_CONFLICT",))
     rules = {r["data_category"]: r for r in policy_rows}
     required = defaultdict(list)
     for resource in view.resources:
@@ -134,6 +142,8 @@ def verify_result(result: AuditResult, request, identity_index, state_index, pol
                 required["FINDING", *key, finding].append((False, citations))
                 required["REMEDIATION", *key, remediation].append((False, set()))
     complete = result.deletion_status == "COMPLETE"
+    if complete and set(identity.issues) & {"AUDIT_CHAIN_GAP", "CURRENT_AUDIT_GAP", "CONFLICTING_IDENTITY_OBSERVATIONS"}:
+        errors.add("IDENTITY_HISTORY_UNCERTAIN")
     if not required:
         errors.add("NO_RELEVANT_RESOURCE_PROOF")
     if complete and (coverage_issues or any(good is not True for key, values in required.items()
