@@ -1,32 +1,14 @@
-<div align="center">
-
 # Phantom Data
 
-**Ghost Data Does Not Exist**
+Evidence-backed deletion auditing for HackerRank Orchestrate, October 2026.
 
-HackerRank Orchestrate · October 2026
+The implementation separates factual evidence extraction, historical identity resolution,
+point-in-time resource reconstruction, policy obligations, and ordered output generation.
+Reported deletion success is a claim; completion requires source-backed final states,
+disabled recreation paths, and preserved retention obligations.
 
-[![Event](https://img.shields.io/badge/HackerRank-Orchestrate-2EC866?style=flat-square)](https://www.hackerrank.com/hackerrank-orchestrate-october26)
-![Status](https://img.shields.io/badge/status-in%20development-8B5CF6?style=flat-square)
+Implementation and evaluation are in progress. The official challenge contract is in
+`problem_statement.md`. The participant corpus belongs at `dataset/` and is excluded from Git.
 
-</div>
-
----
-
-## About
-
-Project repository for **HackerRank Orchestrate — October 2026**, tackling the problem statement **“Ghost Data Does Not Exist.”**
-
-## Problem statement
-
-**Ghost Data Does Not Exist**
-
-The challenge title is recorded here. The full brief, requirements, and evaluation criteria will be documented when added to this repository.
-
-## Project status
-
-Initial repository setup. Implementation, setup instructions, architecture notes, and evaluation results will be added as the project develops.
-
-## Event
-
-[HackerRank Orchestrate — October 2026](https://www.hackerrank.com/hackerrank-orchestrate-october26)
+Work is validated against public examples and independent adversarial cases. Public
+example agreement will be reported separately from hidden-test performance, which is unknown.
