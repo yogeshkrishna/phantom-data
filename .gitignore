@@ -19,3 +19,9 @@ coverage/
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Phantom-data additions
+dataset/
+runs/
+log.txt
+code.zip
