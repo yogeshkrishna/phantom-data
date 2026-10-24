@@ -115,3 +115,28 @@ Search scopes cover only their explicit query, never the global collection.
 Per-record failures roll back partial facts and produce source-located diagnostics.
 Optional real tests use `PHANTOM_DATASET` or the local reference checkout;
 they never open sample outputs. Next: semantic SQL and historical identities.
+
+## Stage 03: SQL evidence
+
+```python
+# phantom.sql_evidence; shares EvidenceBatch/EvidenceDiagnostic with JSON adapter
+normalize_sql(dump: SqlDump, source: EvidenceRef) -> EvidenceBatch
+read_sql_evidence(entry: ManifestEntry) -> EvidenceBatch
+```
+
+Verified all 24 dumps: all 969 rows have an explicit role (891 record facts and
+78 scope declarations), producing 268 per-table/collection scopes; zero diagnostics
+and unchanged input hashes. All 196 tests passed with no skips.
+Store IDs are exact physical SQL table names, not filenames or logical services.
+Capture timestamps come from declared system scope, capture header or explicit
+snapshot-completed footer, never from a stale row update/index timestamp.
+Embedded JSON rejects duplicate keys/nonfinite values and conflicting IDs.
+Only explicit unambiguous `source_resource_id` links produce references.
+
+Completeness convention: the supplied scope table has system and time, not an
+exhaustiveness flag. Its scopes, and point-in-time header-only captures, remain
+partial. Empty tables therefore do not silently prove global/person-wide absence.
+The adapter supports a future explicit `complete=1` declaration for exact domain
+scopes, with malformed rows downgrading completeness. This is exercised only by
+independent synthetic fixtures; no supplied scope was upgraded heuristically.
+Next: request authorization and source-grounded historical identity reconstruction.
