@@ -29,8 +29,10 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "evaluate":
-            print("Evaluation handler pending stage11", file=sys.stderr)
-            return 3
+            from evaluation.main import evaluate
+            outcome=evaluate(args.dataset,args.cache,args.report)
+            print(json.dumps(outcome['metrics'],indent=2))
+            return 0 if all(case['passed'] and case['mutation_rejected'] is not False for case in outcome['custom']) else 2
         started = time.perf_counter()
         prepared = prepare(args.dataset, cache_dir=args.cache)
         if args.command in {"prepare", "check"}:

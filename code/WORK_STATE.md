@@ -246,3 +246,11 @@ All11 screenshots and all7 pages of4 PDFs visually inspected against extraction.
 `prepare(..., cache_dir=None)` builds indexes from compiled facts; PreparedAudit adds inventory/cache_key/cache_hit. CLI prepare/check/audit commands and original stage07 invocation work; evaluate explicitly returns3 until stage11. README contains setup/run commands. Failed audit never overwrites output.
 
 305 tests pass. Synthetic filesystem fixtures prove source-byte/availability invalidation, corrupt/stale/partial cache rebuild, concurrent writes, source-error inventory preservation and operation without sample answers. Real prepare:94 files,0 diagnostics,3.484s with warm OCR/cold compiler. Real check:compiled hit,1.609s. Real selected audit returns0 and verified CSV. These exclude cold neural OCR preparation. Next: stage11 evaluation.
+
+## Stage 11: real evaluation and independent filesystem cases
+
+`evaluation.main.evaluate(dataset_dir, cache_dir, report_path) -> dict` attempts all32 samples before opening expected answers, computes metrics.compare_rows, records blocked requests as missing, and writes evaluation_report.md. CLI evaluate is implemented. `evaluation.fixtures.run_custom_cases(policy_rows)` creates7 independent on-disk CSV/JSON/SQL corpora with explicit expected plans and citation mutations. Source/labels live in evaluation code, not production.
+
+307 tests pass. All7 custom cases pass exactly: resurrection plus active flow, dirty SQL replica, retained clean tombstone, shared support/personal attachment, unavailable future source, non-deletion, retained security/blocked restore. Every applicable citation mutation is rejected. Test proves expected labels are loaded after production attempts; existing compiler test proves production runs without sample_output.csv.
+
+Measured baseline32 visible samples:20 predictions,12 blocked; status accuracy0.40625; exact rows/sequence0.125; step precision0.84375,recall0.419689,F1=0.560554; per-field metrics and error list in generated report. Many sample texts expose intent-classifier omissions despite main-request coverage. Source omissions/retention/citation mismatches remain. These poor baseline results are preserved here and in the log rather than hidden. Next: stage12 source-level general fixes and measured ablations.

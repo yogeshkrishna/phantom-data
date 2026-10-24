@@ -26,6 +26,7 @@ python -B -m unittest discover -s code/tests -q
 python code/main.py evaluate --dataset PATH_TO_DATASET --cache .cache/phantom --report code/evaluation/evaluation_report.md
 ```
 
-The evaluation handler is completed in stage11; until then it explicitly returns
-exit 3. Unknown fields, retention periods and unresolved links remain reported
-gaps. Visible sample answers are evaluation-only, never production inputs.
+Evaluation runs the visible samples and independent filesystem fixtures, writes
+measured Markdown metrics and records missing predictions/errors. A successful
+evaluation process does not mean perfect accuracy. Unknown fields, retention
+periods and unresolved links remain reported gaps. Sample answers are evaluation-only.
