@@ -9,6 +9,7 @@ from .contracts import EntityKey, EvidenceFact, SnapshotScope, parse_instant
 from .identities import FIELD_ALIASES, IdentityResolution, normalize_identifier
 
 STABLE_FIELDS = {"user_id", "customer_reference", "subject_reference", "customer_id"}
+SELECTOR_FIELDS = {"query", "lookup_value", "subject_selector", "uploaded_by"}
 
 
 def leaves(value, path=()):
@@ -28,7 +29,7 @@ def identifier_tokens(fields):
         if not isinstance(value, str) or not value.strip():
             continue
         key = path[-1] if path else ""
-        field = ("email" if "@" in value else "user_id") if key in STABLE_FIELDS else FIELD_ALIASES.get(key)
+        field = ("email" if "@" in value else "user_id") if key in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(key)
         if field and field != "name":
             yield field, normalize_identifier(field, value)
 
@@ -78,10 +79,10 @@ class StateIndex:
             for token in identifier_tokens(fact.stored_fields):
                 self._tokens[token].add(fact.entity)
             for field, values in fact.query_identifiers.items():
-                field = "user_id" if field in STABLE_FIELDS else FIELD_ALIASES.get(field, field)
                 if field != "name":
                     for value in values:
-                        self._tokens[field, normalize_identifier(field, value)].add(fact.entity)
+                        canonical = ("email" if "@" in value else "user_id") if field in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(field, field)
+                        self._tokens[canonical, normalize_identifier(canonical, value)].add(fact.entity)
             # Free-text matching uses a separate exact boundary check at resolve.
             for _, value in leaves(fact.stored_fields):
                 if isinstance(value, str):
@@ -105,11 +106,9 @@ class StateIndex:
         if tokens & aliases:
             return True
         for field, values in fact.query_identifiers.items():
-            canonical = "user_id" if field in STABLE_FIELDS else FIELD_ALIASES.get(field, field)
             for value in values:
+                canonical = ("email" if "@" in value else "user_id") if field in STABLE_FIELDS | SELECTOR_FIELDS else FIELD_ALIASES.get(field, field)
                 if (canonical, normalize_identifier(canonical, value)) in aliases:
-                    return True
-                if canonical == "query" and any(value == alias for _, alias in aliases):
                     return True
         for _, value in leaves(fact.stored_fields):
             if isinstance(value, str):
