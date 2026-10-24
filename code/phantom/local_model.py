@@ -7,6 +7,7 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from .cache import atomic_replace
 
 OCR_VERSION = "grounded-ocr.v1"
 
@@ -81,7 +82,7 @@ class LocalOCR:
                 with NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as handle:
                     temporary = Path(handle.name)
                     json.dump({"key": key, "identity": identity, "spans": [asdict(s) for s in spans]}, handle)
-                os.replace(temporary, path)
+                atomic_replace(temporary, path)
             finally:
                 if temporary:
                     temporary.unlink(missing_ok=True)

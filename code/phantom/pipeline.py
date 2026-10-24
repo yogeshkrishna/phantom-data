@@ -1,24 +1,15 @@
 """Read-only preparation and audited request execution. No expected-answer access."""
 
-import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
 from .contracts import AuditResult, EvidenceRef, parse_instant
-from .activity_evidence import normalize_activity
-from .corpus import read_manifest
+from .json_evidence import EvidenceDiagnostic
 from .identities import IdentityIndex
 from .intent import classify_intent
-from .json_evidence import EvidenceDiagnostic, read_json_evidence
-from .log_evidence import read_log_evidence
-from .local_model import LocalOCR
-from .media_evidence import read_media_evidence
 from .planner import AuditBlocked, plan
 from .policy import PolicyEngine
-from .sql_evidence import read_sql_evidence
 from .state import StateIndex
-from .tabular import load_tables
-from .text_evidence import read_text_evidence
 from .verifier import verify_result
 
 
@@ -32,47 +23,21 @@ class PreparedAudit:
     files_attempted: int
     files_supported: int
     model_usage: dict | None = None
+    inventory: tuple[dict, ...] = ()
+    cache_key: str = ""
+    cache_hit: bool = False
 
 
-def prepare(dataset_dir: Path, *, media_cache: Path | None = None) -> PreparedAudit:
-    activity_digest = hashlib.sha256((dataset_dir / "system_activity.csv").read_bytes()).hexdigest()
-    tables = load_tables(dataset_dir)
-    if hashlib.sha256((dataset_dir / "system_activity.csv").read_bytes()).hexdigest() != activity_digest:
-        raise ValueError("activity CSV changed during loading")
-    entries = read_manifest(dataset_dir)
-    facts, scopes, diagnostics = [], [], []
-    supported = 0
-    media = []
-    readers = {".json": read_json_evidence, ".sql": read_sql_evidence,
-               ".log": read_log_evidence, ".txt": read_text_evidence}
-    for entry in entries:
-        if entry.path.suffix.lower() in {".pdf", ".png", ".jpg", ".jpeg"}:
-            media.append(entry)
-            continue
-        reader = readers.get(entry.path.suffix.lower())
-        if reader is None:
-            diagnostics.append(EvidenceDiagnostic("UNSUPPORTED_EVIDENCE", EvidenceRef(
-                entry.file_id, entry.file_path, entry.sha256, "", entry.captured_at),
-                "Evidence not yet interpreted; completion is unproven"))
-            continue
-        batch = reader(entry)
-        supported += 1
-        facts.extend(batch.facts)
-        scopes.extend(batch.scopes)
-        diagnostics.extend(batch.diagnostics)
-    activity = normalize_activity(tables["system_activity"], activity_digest, facts)
-    facts.extend(activity.facts)
-    diagnostics.extend(activity.diagnostics)
-    ocr = LocalOCR(media_cache if media_cache is not None else Path(".cache/ocr"))
-    for entry in media:
-        batch = read_media_evidence(entry, ocr, facts)
-        supported += 1
-        facts.extend(batch.facts)
-        scopes.extend(batch.scopes)
-        diagnostics.extend(batch.diagnostics)
+def prepare(dataset_dir: Path, *, media_cache: Path | None = None,
+            cache_dir: Path | None = None) -> PreparedAudit:
+    from .compiler import compile_corpus
+    compiled = compile_corpus(dataset_dir, cache_dir=cache_dir, media_cache=media_cache)
+    tables, facts = compiled.tables, compiled.facts
     return PreparedAudit(tables, IdentityIndex(tables["user_identities"], tables["user_audit_log"], facts),
-                         StateIndex(facts, scopes), PolicyEngine(tables["deletion_rules"]),
-                         tuple(diagnostics), len(entries), supported, ocr.usage() if media else None)
+                         StateIndex(facts, compiled.scopes), PolicyEngine(tables["deletion_rules"]),
+                         compiled.diagnostics, len(compiled.inventory),
+                         sum(item["status"] != "ERROR" for item in compiled.inventory),
+                         compiled.model_usage, compiled.inventory, compiled.cache_key, compiled.cache_hit)
 
 
 def audit_request(prepared: PreparedAudit, request: dict[str, str]) -> AuditResult:
