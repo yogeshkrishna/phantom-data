@@ -19,11 +19,3 @@ coverage/
 # OS metadata
 .DS_Store
 Thumbs.db
-
-# Challenge corpus and local run artifacts
-dataset/
-data/
-runs/
-log.txt
-code.zip
-.pytest_cache/
