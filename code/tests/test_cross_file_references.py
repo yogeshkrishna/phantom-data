@@ -71,6 +71,22 @@ class CrossFileReferenceTests(unittest.TestCase):
         self.assertEqual({r.entity.system_id for r in prepared(result).states.resolve(subject(), C).resources},
                          {"search_service"})
 
+    def test_two_ownerless_404s_cannot_be_assigned_by_order_or_time(self):
+        first = fact({}, B, state="ABSENT", resource="opaque-left")
+        second = fact({}, B, state="ABSENT", resource="opaque-right")
+        for order in ((first, second), (second, first)):
+            self.assertFalse(StateIndex(order).resolve(subject(), C).resources)
+
+    def test_input_order_and_opaque_identifiers_do_not_control_reference_binding(self):
+        search, target = sources()
+        search = replace(search, entity=replace(search.entity, resource_id="index-random-987"),
+                         stored_fields={"email": "a@example.test", "source_resource_id": "target-random-123"},
+                         field_coverage=("email", "source_resource_id"))
+        target = replace(target, entity=replace(target.entity, resource_id="target-random-123"))
+        left = audit_request(prepared(bind_resource_references((search, target))), request())
+        right = audit_request(prepared(bind_resource_references((target, search))), request())
+        self.assertEqual(left, right)
+
 
 if __name__ == "__main__":
     unittest.main()

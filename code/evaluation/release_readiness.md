@@ -1,5 +1,17 @@
 # Release readiness
 
+Current accuracy investigation: **BLOCKED**. All 518 requests attempted; 462
+supported and 56 blocked. Visible exact matches 8/32, status 87.5%, step F1
+86.43%. Final tests: 355 pass, zero skips. No final output.csv written and no
+package rebuilt. The existing code.zip is stale.
+
+See [current investigation](accuracy_investigation.md),
+[all original 61 blocked requests](blocked_case_audit.md), and
+[all original 25 mismatches](sample_diagnosis.md). The historical performance and
+archive measurements below describe the earlier source version.
+
+## Historical release rehearsal (before accuracy investigation)
+
 Run: 2026-10-25T02:22:15.337426+00:00. Gate: **BLOCKED**.
 
 Attempted 518 requests; 457 supported, 61 blocked. Output written: False.

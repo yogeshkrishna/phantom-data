@@ -70,6 +70,18 @@ class SqlBooleanTests(unittest.TestCase):
                               EvidenceRef("source", "snapshot.sql", "a"*64, "", B))
         self.assertIs(type(batch.facts[0].stored_fields["score"]), int)
 
+    def test_opaque_resource_and_case_renaming_does_not_change_semantics(self):
+        for value in (0, 1):
+            original = context(value)
+            old = audit_request(original, REQUEST)
+            renamed_facts = tuple(replace(f, entity=replace(f.entity, resource_id="renamed-"+f.entity.resource_id))
+                                  for f in reversed(original.states.facts))
+            renamed = replace(original, states=StateIndex(renamed_facts))
+            new = audit_request(renamed, dict(REQUEST, case_id="arbitrary-unseen-request"))
+            self.assertEqual(old.deletion_status, new.deletion_status)
+            self.assertEqual([(s.phase, s.operation, s.state) for s in old.steps],
+                             [(s.phase, s.operation, s.state) for s in new.steps])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -9,30 +9,30 @@ Predictions were attempted through the production pipeline before reading sample
 | expected_cases | 32 |
 | predicted_cases | 28 |
 | status_accuracy | 0.875000 |
-| case_exact_accuracy | 0.218750 |
-| sequence_accuracy | 0.218750 |
+| case_exact_accuracy | 0.250000 |
+| sequence_accuracy | 0.250000 |
 | expected_steps | 193 |
-| predicted_steps | 167 |
-| matched_steps | 155 |
-| step_precision | 0.928144 |
-| step_recall | 0.803109 |
-| step_f1 | 0.861111 |
+| predicted_steps | 168 |
+| matched_steps | 156 |
+| step_precision | 0.928571 |
+| step_recall | 0.808290 |
+| step_f1 | 0.864266 |
 
 Positional field accuracy (unmatched/missing/extra positions are penalized):
 
 | Field | Accuracy |
 |---|---|
-| step_no | 0.809045 |
-| phase | 0.793970 |
-| system_id | 0.572864 |
-| resource_id | 0.572864 |
-| operation | 0.628141 |
-| state | 0.638191 |
-| evidence_id | 0.788945 |
+| step_no | 0.814070 |
+| phase | 0.798995 |
+| system_id | 0.582915 |
+| resource_id | 0.582915 |
+| operation | 0.633166 |
+| state | 0.643216 |
+| evidence_id | 0.793970 |
 
 Missing cases: case_01, case_02, case_04, case_31. Extra cases: none.
 
-Evidence: 94/94 files interpreted, 0 diagnostics. Preparation 2.740s; prepared sample attempts 0.062s; compiler cache hit=False.
+Evidence: 94/94 files interpreted, 0 diagnostics. Preparation 2.780s; prepared sample attempts 0.060s; compiler cache hit=False.
 
 ## Independent filesystem cases
 
@@ -66,7 +66,6 @@ Fixtures construct their own CSV/JSON/SQL sources and explicit expected plans; n
 | case_02 | COMPLETE / BLOCKED | 1 / 0 | NO_RELEVANT_RESOURCE_PROOF |
 | case_03 | COMPLETE / COMPLETE | 3 / 2 | STEP_OR_CITATION_MISMATCH |
 | case_04 | COMPLETE / BLOCKED | 2 / 0 | NO_RELEVANT_RESOURCE_PROOF |
-| case_06 | INCOMPLETE / INCOMPLETE | 4 / 3 | STEP_OR_CITATION_MISMATCH |
 | case_07 | INCOMPLETE / INCOMPLETE | 4 / 6 | STEP_OR_CITATION_MISMATCH |
 | case_08 | INCOMPLETE / INCOMPLETE | 4 / 4 | STEP_OR_CITATION_MISMATCH |
 | case_09 | INCOMPLETE / INCOMPLETE | 5 / 3 | STEP_OR_CITATION_MISMATCH |
@@ -99,7 +98,6 @@ These evaluation-only lookups use expected resource IDs solely to diagnose missi
 | case_03 | analytics_platform/analytics_9406 | missing expected subject link | evidence_94:/lines/42../lines/43 (state/PRESENT); activity_3852:/rows/3851 (claim/SUCCESS) |
 | case_04 | account_service/account_004 | missing expected subject link | No visible normalized record for this resource |
 | case_04 | analytics_platform/analytics_901 | missing expected subject link | evidence_56:/records/0 (state/PRESENT); activity_3463:/rows/3462 (claim/SUCCESS) |
-| case_06 | account_service/account_006 | missing expected subject link | activity_3545:/rows/3544 (claim/SUCCESS) |
 | case_07 | account_service/account_007 | missing expected subject link | activity_3590:/rows/3589 (claim/SUCCESS) |
 | case_07 | object_storage/object_19 | additional supported resource | activity_4007:/rows/4006 (identity/LINKED); evidence_46:/image/region/table/row/1 (state/PRESENT) |
 | case_08 | account_service/account_008 | missing expected subject link | activity_3554:/rows/3553 (claim/SUCCESS) |
@@ -155,9 +153,9 @@ Same visible32 requests, same expected rows and independent verifier. Deliberate
 
 | Variant | Status accuracy | Exact row | Step F1 | Predictions | Blocked | Seconds |
 |---|---|---|---|---|---|---|
-| full | 0.875000 | 0.218750 | 0.861111 | 28 | 4 | 1.097 |
-| without_historical_identities | 0.750000 | 0.218750 | 0.754601 | 24 | 8 | 0.627 |
-| without_replicas | 0.812500 | 0.156250 | 0.831909 | 26 | 6 | 0.833 |
-| without_neural_images | 0.875000 | 0.218750 | 0.865922 | 28 | 4 | 0.888 |
+| full | 0.875000 | 0.250000 | 0.864266 | 28 | 4 | 0.923 |
+| without_historical_identities | 0.750000 | 0.250000 | 0.758410 | 24 | 8 | 0.595 |
+| without_replicas | 0.812500 | 0.187500 | 0.835227 | 26 | 6 | 0.876 |
+| without_neural_images | 0.875000 | 0.250000 | 0.869081 | 28 | 4 | 1.055 |
 
 The image removal isolates neural screenshot facts; PDF text layers remain. Better or worse sample metrics under a removal do not establish hidden-test benefit. Additional supported records absent from a canonical row can reduce exact-match scores.
