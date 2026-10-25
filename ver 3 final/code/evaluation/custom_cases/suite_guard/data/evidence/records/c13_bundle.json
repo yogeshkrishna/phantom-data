@@ -1,0 +1,21 @@
+{
+  "exported_at": "2026-08-20T11:30:00Z",
+  "source": "records_assurance_service",
+  "snapshots": [
+    {
+      "captured_at": "2026-08-20T11:30:00Z",
+      "data_store": "account_service",
+      "collection": "customer_profiles",
+      "records": [
+        {
+          "resource_id": "account_9921",
+          "customer_reference": null,
+          "full_name": null,
+          "email": null,
+          "phone": null,
+          "account_status": "ACTIVE"
+        }
+      ]
+    }
+  ]
+}

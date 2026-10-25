@@ -1,0 +1,4 @@
+2026-08-10T09:00:00Z level=DEBUG service=account_service trace_id=rb-91 event=profile_lookup_started resource_id=account_9902 lookup_key=mei.chen@example.org
+2026-08-10T09:00:01Z level=INFO service=account_service trace_id=rb-91 event=profile_lookup_completed resource_id=account_9902 rows=0 http_status=404
+2026-08-10T09:05:00Z level=INFO service=security_service trace_id=rb-92 event=audit_record_read_completed resource_id=audit_record_9901 rows=1 subject_reference=user_915 retention_until=2031-12-31T23:59:59Z
+2026-08-10T09:06:00Z level=INFO service=security_service trace_id=rb-93 event=audit_record_read_completed resource_id=audit_record_9902 rows=1 subject_reference=user_916 retention_until=2031-12-31T23:59:59Z

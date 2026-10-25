@@ -1,0 +1,28 @@
+{
+  "exported_at": "2026-07-20T11:00:00Z",
+  "region": "global",
+  "source": "records_assurance_gateway",
+  "service_exports": {
+    "account_service": {
+      "profile_lookups": [
+        {
+          "observed_at": "2026-07-20T10:10:00Z",
+          "profile": null,
+          "resource_id": "account_9799",
+          "status_code": 404
+        }
+      ]
+    },
+    "security_service": {
+      "audit_records": [
+        {
+          "event_code": "ACCOUNT_DELETION_RECORDED",
+          "observed_at": "2026-07-20T10:30:00Z",
+          "resource_id": "audit_record_9701",
+          "retention_until": "2031-12-31T23:59:59Z",
+          "subject_reference": "user_913"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+# Direct runtime dependencies. Use requirements-lock.txt for the fully pinned validation environment.
+
+# PDF text extraction (falls back to the `pdftotext` binary if pypdf cannot read a page).
+pypdf==6.16.2
+
+# Screenshot OCR. The OCR models ship inside the wheel; no network access is needed at run time.
+# Set GHOST_AUDIT_CACHE_DIR to keep OCR text outside this tree; the cache
+# is derived from the challenge evidence and is never packaged.
+rapidocr-onnxruntime==1.2.3
+onnxruntime==1.31.0
+opencv-python==5.0.0.93
+numpy==2.2.5
+
+# Optional, not installed by default: `anthropic` is only needed for `python code/main.py --llm`
+# (off by default; reads ANTHROPIC_API_KEY from the environment). Install it separately:
+#   python -m pip install anthropic

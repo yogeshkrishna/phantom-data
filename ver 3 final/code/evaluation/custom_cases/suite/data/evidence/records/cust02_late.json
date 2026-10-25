@@ -1,0 +1,22 @@
+{
+  "exported_at": "2026-05-22T12:00:00Z",
+  "source": "records_assurance_service",
+  "snapshots": [
+    {
+      "captured_at": "2026-05-22T12:00:00Z",
+      "data_store": "account_service",
+      "collection": "customer_profiles",
+      "records": [
+        {
+          "resource_id": "account_9201",
+          "customer_reference": "user_902",
+          "full_name": "Oskar Vale",
+          "email": "oskar.vale@example.org",
+          "phone": "+46 70 111 902",
+          "account_status": "ACTIVE",
+          "signup_channel": "restore_job"
+        }
+      ]
+    }
+  ]
+}

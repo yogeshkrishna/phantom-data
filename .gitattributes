@@ -1,3 +1,4 @@
 # Preserve the verified version snapshots byte-for-byte, including CSV line endings.
 "ver 1/**" -text
 "ver 2/**" -text
+"ver 3 final/**" -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
