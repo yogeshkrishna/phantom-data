@@ -29,6 +29,10 @@ DOMAIN_TABLES = {
     "security_audit_records": ("security_service", "security_audit_events"),
 }
 GENERIC_COLUMNS = {"resource_id", "origin_system", "collection_name", "record_json", "updated_at"}
+BOOLEAN_COLUMNS = {
+    "connector_subscriptions": frozenset({"enabled"}),
+    "backup_restore_entries": frozenset({"restore_allowed"}),
+}
 
 
 def _text(value):
@@ -149,6 +153,12 @@ def normalize_sql(dump: SqlDump, source: EvidenceRef) -> EvidenceBatch:
                     system, collection = domain
                     fields = {key: value for key, value in values.items()
                               if key not in {"updated_at", "indexed_at"}}
+                    # SQLite BOOLEAN values use INTEGER storage. Interpret only
+                    # reviewed boolean columns; NULL/text/nonbinary numbers stay
+                    # unknown, and JSON document numbers remain JSON numbers.
+                    for key in BOOLEAN_COLUMNS.get(table.name, ()):
+                        if type(fields.get(key)) is int and fields[key] in (0, 1):
+                            fields[key] = bool(fields[key])
                 category = COLLECTION_CATEGORIES[(system, collection)]
                 resource = _text(values.get("resource_id"))
                 if "resource_id" in fields and fields["resource_id"] != resource:
