@@ -1,0 +1,27 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local caches and environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+
+# Generated output
+coverage/
+.cache/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Phantom-data additions
+dataset/
+runs/
+log.txt
+code.zip

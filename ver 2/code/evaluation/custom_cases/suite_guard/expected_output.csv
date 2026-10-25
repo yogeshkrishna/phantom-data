@@ -1,0 +1,3 @@
+case_id,deletion_status,steps_json
+cust_13,INCOMPLETE,"[{""step_no"":1,""phase"":""VERIFICATION"",""system_id"":""security_service"",""resource_id"":""audit_record_9921"",""operation"":""VERIFY_RECORD_PRESENT"",""state"":""PRESENT"",""evidence_id"":""""}]"
+cust_14,INCOMPLETE,"[{""step_no"":1,""phase"":""VERIFICATION"",""system_id"":""security_service"",""resource_id"":""audit_record_9922"",""operation"":""VERIFY_RECORD_PRESENT"",""state"":""PRESENT"",""evidence_id"":""""}]"

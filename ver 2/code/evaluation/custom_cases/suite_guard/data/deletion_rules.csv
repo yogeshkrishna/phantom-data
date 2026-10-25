@@ -1,0 +1,13 @@
+rule_id,data_category,condition,required_action
+synthetic_rule_1,USER_PROFILE,Synthetic policy for isolated regression tests,DELETE
+synthetic_rule_2,SECONDARY_IDENTIFIER,Synthetic policy for isolated regression tests,DELETE
+synthetic_rule_3,SUPPORT_MESSAGE,Synthetic policy for isolated regression tests,REDACT
+synthetic_rule_4,SUPPORT_ATTACHMENT,Synthetic policy for isolated regression tests,DELETE
+synthetic_rule_5,ANALYTICS_PROFILE,Synthetic policy for isolated regression tests,ANONYMIZE
+synthetic_rule_6,PRODUCT_TELEMETRY,Synthetic policy for isolated regression tests,ANONYMIZE
+synthetic_rule_7,ACCOUNT_TOMBSTONE,Synthetic policy for isolated regression tests,REDACT
+synthetic_rule_8,SECURITY_AUDIT_LOG,Synthetic policy for isolated regression tests,RETAIN
+synthetic_rule_9,LEGAL_HOLD_RECORD,Synthetic policy for isolated regression tests,RETAIN
+synthetic_rule_10,BACKUP_ARCHIVE,Synthetic policy for isolated regression tests,RETAIN
+synthetic_rule_11,SEARCH_INDEX,Synthetic policy for isolated regression tests,DELETE
+synthetic_rule_12,EXPORT_FILE,Synthetic policy for isolated regression tests,DELETE

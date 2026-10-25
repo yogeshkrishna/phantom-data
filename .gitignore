@@ -25,3 +25,19 @@ dataset/
 runs/
 log.txt
 code.zip
+
+# Shared two-version publication boundaries
+*.zip
+*.7z
+*.tar
+*.gz
+*.tgz
+*.rar
+*.jsonl
+*transcript*
+*chat_history*
+outputs/
+reports/
+/output*.csv
+/*predictions*.csv
+evidence_cache/

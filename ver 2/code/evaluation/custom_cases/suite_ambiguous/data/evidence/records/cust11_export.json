@@ -1,0 +1,65 @@
+{
+  "exported_at": "2026-08-20T11:00:00Z",
+  "region": "global",
+  "source": "records_assurance_gateway",
+  "service_exports": {
+    "search_service": {
+      "index_queries": [
+        {
+          "hits": {
+            "documents": [
+              {
+                "customer_reference": null,
+                "display_name": null,
+                "email": "wren.halvorsen@example.org",
+                "email_hash": null,
+                "phone": null,
+                "resource_id": "search_9911"
+              }
+            ],
+            "total": 1
+          },
+          "observed_at": "2026-08-20T10:20:00Z",
+          "query": "wren.halvorsen@example.org",
+          "resource_id": "search_9911"
+        },
+        {
+          "hits": {
+            "documents": [
+              {
+                "customer_reference": null,
+                "display_name": null,
+                "email": "sara.lind@example.org",
+                "email_hash": null,
+                "phone": null,
+                "resource_id": "search_9912"
+              }
+            ],
+            "total": 1
+          },
+          "observed_at": "2026-08-20T10:20:00Z",
+          "query": "sara.lind@example.org",
+          "resource_id": "search_9912"
+        }
+      ]
+    },
+    "security_service": {
+      "audit_records": [
+        {
+          "event_code": "ACCOUNT_DELETION_RECORDED",
+          "observed_at": "2026-08-20T10:30:00Z",
+          "resource_id": "audit_record_9911",
+          "retention_until": "2031-12-31T23:59:59Z",
+          "subject_reference": "user_917"
+        },
+        {
+          "event_code": "ACCOUNT_DELETION_RECORDED",
+          "observed_at": "2026-08-20T10:30:00Z",
+          "resource_id": "audit_record_9912",
+          "retention_until": "2031-12-31T23:59:59Z",
+          "subject_reference": "user_918"
+        }
+      ]
+    }
+  }
+}

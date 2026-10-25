@@ -1,0 +1,13 @@
+file_id,file_path,origin,captured_at
+evidence_901,evidence/records/cust01_export.json,service_resource_export,2026-05-10T11:00:00Z
+evidence_902,evidence/logs/cust02_trace.log,service_readback_logs,2026-05-20T11:00:00Z
+evidence_903,evidence/records/cust02_late.json,records_assurance_snapshot_bundle,2026-05-22T12:00:00Z
+evidence_904,evidence/db/cust03_replica.sql,customer_data_read_replica_capture,2026-05-30T11:00:00Z
+evidence_905,evidence/records/cust05_bundle.json,records_assurance_snapshot_bundle,2026-06-20T11:00:00Z
+evidence_906,evidence/records/cust06_export.json,service_resource_export,2026-07-10T11:00:00Z
+evidence_907,evidence/logs/cust07_trace.log,service_readback_logs,2026-07-18T09:00:00Z
+evidence_908,evidence/records/cust07_export.json,service_resource_export,2026-07-20T11:00:00Z
+evidence_909,evidence/db/cust08_inventory.sql,customer_data_inventory_capture,2026-07-30T10:00:00Z
+evidence_910,evidence/logs/cust08_late.log,central_observability_export,2026-07-31T12:00:00Z
+evidence_911,evidence/logs/cust09_trace.log,service_readback_logs,2026-08-10T10:00:00Z
+evidence_912,evidence/records/cust09_bundle.json,records_assurance_snapshot_bundle,2026-08-10T11:00:00Z

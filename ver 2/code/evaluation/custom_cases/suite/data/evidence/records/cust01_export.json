@@ -1,0 +1,68 @@
+{
+  "exported_at": "2026-05-10T11:00:00Z",
+  "region": "global",
+  "source": "records_assurance_gateway",
+  "service_exports": {
+    "account_service": {
+      "profile_lookups": [
+        {
+          "observed_at": "2026-05-10T10:10:00Z",
+          "profile": null,
+          "resource_id": "account_9101",
+          "status_code": 404
+        }
+      ]
+    },
+    "search_service": {
+      "index_queries": [
+        {
+          "hits": {
+            "documents": [
+              {
+                "customer_reference": null,
+                "display_name": null,
+                "email": "mira.k77@example.org",
+                "email_hash": null,
+                "phone": null,
+                "resource_id": "search_9101"
+              }
+            ],
+            "total": 1
+          },
+          "observed_at": "2026-05-10T10:20:00Z",
+          "query": "mira.k77@example.org",
+          "resource_id": "search_9101"
+        },
+        {
+          "hits": {
+            "documents": [
+              {
+                "customer_reference": null,
+                "display_name": "Mira Kovacs",
+                "email": "mira.k77.jr@example.org",
+                "email_hash": null,
+                "phone": null,
+                "resource_id": "search_9102"
+              }
+            ],
+            "total": 1
+          },
+          "observed_at": "2026-05-10T10:21:00Z",
+          "query": "mira.k77.jr@example.org",
+          "resource_id": "search_9102"
+        }
+      ]
+    },
+    "security_service": {
+      "audit_records": [
+        {
+          "event_code": "ACCOUNT_DELETION_RECORDED",
+          "observed_at": "2026-05-10T10:30:00Z",
+          "resource_id": "audit_record_9101",
+          "retention_until": "2031-12-31T23:59:59Z",
+          "subject_reference": "user_901"
+        }
+      ]
+    }
+  }
+}

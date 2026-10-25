@@ -1,0 +1,3 @@
+2026-07-30T10:30:00Z level=DEBUG service=account_service trace_id=tr-81 event=profile_lookup_started lookup_key=aiko.mori@example.org
+2026-07-30T10:30:02Z level=INFO service=account_service trace_id=tr-81 resource_id=account_9801 event=profile_lookup_completed rows=0 http_status=404
+2026-07-30T15:00:01Z level=INFO service=backup_service trace_id=tr-82 event=restore_policy_read_completed resource_id=backup_9801 archive_present=true restore_allowed=false customer_reference=user_914

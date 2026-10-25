@@ -1,0 +1,11 @@
+case_id,email,requested_at,reported_status,reported_at,audit_at,request_text
+cust_01,mira.k77@example.org,2026-05-01T09:00:00Z,COMPLETE,2026-05-03T12:00:00Z,2026-05-10T12:00:00Z,I changed my email last year. Please delete my account and anything tied to the old address.
+cust_02,oskar.vale@example.org,2026-05-11T09:00:00Z,COMPLETE,2026-05-13T12:00:00Z,2026-05-20T12:00:00Z,Please permanently delete the account associated with this email address.
+cust_03,lena.roos@example.org,2026-05-21T09:00:00Z,NOT_STARTED,2026-05-23T12:00:00Z,2026-05-30T12:00:00Z,Please erase the account linked to this email address.
+cust_04,tomas.ibarra@example.org,2026-06-01T09:00:00Z,NOT_STARTED,2026-06-03T12:00:00Z,2026-06-10T12:00:00Z,"Quiero una copia de los datos de mi cuenta. No eliminen mi cuenta, todavía la uso."
+cust_05,ines.morel@example.org,2026-06-11T09:00:00Z,COMPLETE,2026-06-13T12:00:00Z,2026-06-20T12:00:00Z,I want to close this account and have its associated personal data deleted.
+cust_06,rafa.duarte@example.org,2026-07-01T09:00:00Z,COMPLETE,2026-07-03T12:00:00Z,2026-07-10T12:00:00Z,Please delete my account and all personal data you hold about me.
+cust_07,jonas.weber@example.org,2026-07-11T09:00:00Z,PARTIALLY_COMPLETE,2026-07-13T12:00:00Z,2026-07-20T12:00:00Z,Please erase the account linked to this email address.
+cust_08,aiko.mori@example.org,2026-07-21T09:00:00Z,NOT_STARTED,2026-07-23T12:00:00Z,2026-07-30T12:00:00Z,Je demande la suppression définitive du compte associé à cette adresse e-mail.
+cust_09,lars.holm@example.org,2026-08-01T09:00:00Z,COMPLETE,2026-08-03T12:00:00Z,2026-08-10T12:00:00Z,Please close my account and process the associated personal-data deletion.
+cust_10,mei.chen@example.org,2026-08-01T09:00:00Z,COMPLETE,2026-08-03T12:00:00Z,2026-08-10T12:00:00Z,I would like the account associated with this address to be erased.

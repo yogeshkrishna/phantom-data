@@ -1,0 +1,25 @@
+{
+  "exported_at": "2026-08-20T11:00:00Z",
+  "region": "global",
+  "source": "records_assurance_gateway",
+  "service_exports": {
+    "security_service": {
+      "audit_records": [
+        {
+          "event_code": "ACCOUNT_DELETION_RECORDED",
+          "observed_at": "2026-08-20T10:30:00Z",
+          "resource_id": "audit_record_9921",
+          "retention_until": "2031-12-31T23:59:59Z",
+          "subject_reference": "user_921"
+        },
+        {
+          "event_code": "ACCOUNT_DELETION_RECORDED",
+          "observed_at": "2026-08-20T10:30:00Z",
+          "resource_id": "audit_record_9922",
+          "retention_until": "2031-12-31T23:59:59Z",
+          "subject_reference": "user_922"
+        }
+      ]
+    }
+  }
+}

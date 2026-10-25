@@ -1,23 +1,41 @@
 # Phantom Data
 
-Local, evidence-grounded deletion auditing for HackerRank Orchestrate's
+Local deletion auditing for HackerRank Orchestrate's
 [Ghost Data Still Exists](https://github.com/interviewstreet/hackerrank-orchestrate-october26/blob/main/problem_statement.md).
 
-The Python 3.12 pipeline resolves historical identities, reads CSV/JSON/SQL/logs,
-PDFs and screenshots, reconstructs each physical store at the audit cutoff, and
-applies supplied policy. An independent checker validates every proposed result.
-Neural OCR runs locally; no paid API is required.
+Both engines resolve identifiers, inspect structured evidence and local media,
+apply deletion policy, and emit `case_id,deletion_status,steps_json`.
+Normal execution uses local OCR and requires no paid API.
 
-[Setup and commands](code/README.md) | [Measured evaluation](code/evaluation/evaluation_report.md) |
-[Release gates and missing proof](code/evaluation/release_readiness.md)
+| Version | Purpose | Setup and evaluation |
+| --- | --- | --- |
+| [ver 1](ver%201/) | Preserved public baseline from `c056cb6` | [Original instructions](ver%201/code/README.md), [measured results](ver%201/code/evaluation/evaluation_report.md) |
+| [ver 2](ver%202/) | Operational parallel engine with independently reproduced output | [Installation, audit, validation and tests](ver%202/README.md) |
 
-Visible development samples currently measure 87.5% status accuracy, 86.43% step F1
-and 25% exact rows (8/32). These are not hidden-test scores. The full 518-request
-attempt supports 462 results and blocks 56 for missing proof. The release command
-will not invent those results or write a misleading final CSV.
+On the 32 visible development samples, ver 1 measured 8 exact rows,
+87.5% status accuracy and 86.43% step F1. Ver 2 reproduced 28 exact rows,
+100% status accuracy and 98.95% step F1. These are development measurements,
+not hidden-test accuracy claims. Ver 2 generated all 518 requested rows;
+ver 1's preserved interpretation supports 462 and blocks 56 for missing proof.
 
-The previous code.zip is stale; this accuracy investigation did not rebuild it.
-[Detailed results and remaining limitations](code/evaluation/accuracy_investigation.md).
-The corpus, private evidence caches, model binaries and transcript stay outside
-the code archive. Transcript export retains genuine history and states known
-provenance gaps.
+## Running locally
+
+Use Python 3.12 and follow the selected version's instructions from inside its
+directory. The two versions have separate dependencies and command-line
+interfaces; use separate environments.
+
+Supply the official dataset externally. It is not included here. Keep evidence,
+OCR caches, generated predictions, environments and private development logs
+outside Git. Required synthetic fixtures remain with each engine's tests.
+
+Ver 2's source and publication copy produced byte-identical 518-row outputs
+with both fresh and cached OCR. Its 43 tests passed with external corpus
+regressions enabled, and its 14 synthetic evaluation cases passed. Fresh OCR
+and warm runs have different costs; consult the version instructions before
+interpreting performance or enabling inference comparison settings.
+
+The historical ver 1 documentation is preserved within that directory and
+describes the baseline as it existed before this reorganization. Shared
+contributor rules remain in [AGENTS.md](AGENTS.md). Private transcripts,
+datasets, release archives and experimental improvements are not part of this
+publication. No repository-wide software license has been added by this import.
