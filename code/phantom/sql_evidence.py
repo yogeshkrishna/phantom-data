@@ -149,6 +149,11 @@ def normalize_sql(dump: SqlDump, source: EvidenceRef) -> EvidenceBatch:
                 if generic:
                     system, collection = _text(values.get("origin_system")), _text(values.get("collection_name"))
                     fields = _json_record(values.get("record_json"))
+                    extra_columns = {key: value for key, value in values.items() if key not in GENERIC_COLUMNS}
+                    if extra_columns:
+                        # Preserve all physical payload columns without allowing
+                        # them to overwrite equally named JSON document fields.
+                        fields = {"document": fields, "sql_columns": extra_columns}
                 else:
                     system, collection = domain
                     fields = {key: value for key, value in values.items()
@@ -161,13 +166,18 @@ def normalize_sql(dump: SqlDump, source: EvidenceRef) -> EvidenceBatch:
                             fields[key] = bool(fields[key])
                 category = COLLECTION_CATEGORIES[(system, collection)]
                 resource = _text(values.get("resource_id"))
-                if "resource_id" in fields and fields["resource_id"] != resource:
+                document = fields["document"] if generic and extra_columns else fields
+                if "resource_id" in document and document["resource_id"] != resource:
                     raise ValueError("conflicting resource identity")
                 observed = declared.get(system, (header_time,))[0]
                 if not observed or system in invalid_systems:
                     raise ValueError("missing capture time")
                 parse_instant(observed)
                 metadata = {"collection": collection, "sql_table": table.name,
+                            # SELECT * over the supplied physical table yields a
+                            # complete stored row, including the whole JSON blob.
+                            # This says nothing about collection completeness.
+                            "full_record": True,
                             "row_updated_at": values.get("updated_at"),
                             "row_indexed_at": values.get("indexed_at"),
                             "scope_basis": "explicit-complete" if declared.get(system, (None, False))[1]
