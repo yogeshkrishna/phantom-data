@@ -199,7 +199,8 @@ class StateIndex:
                     linked.add(neighbor)
                     pending.append(neighbor)
             for neighbor, support in self._reference_edges.get(entity, ()):
-                if neighbor in self._by_entity and neighbor not in linked and self._visible(support, cutoff):
+                if neighbor in self._by_entity and neighbor not in linked and self._visible(support, cutoff) and any(
+                        self._visible(fact, cutoff) for fact in self._by_entity[neighbor]):
                     linked.add(neighbor)
                     pending.append(neighbor)
         # A claim with no physical store declaration is not an invented extra copy.

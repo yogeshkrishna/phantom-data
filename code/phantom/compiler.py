@@ -15,6 +15,7 @@ from .contracts import EntityKey, EvidenceFact, EvidenceRef, SnapshotScope, pars
 from .corpus import read_manifest
 from .json_evidence import EvidenceDiagnostic, read_json_evidence
 from .local_model import LocalOCR
+from .references import bind_resource_references
 from .log_evidence import read_log_evidence
 from .media_evidence import read_media_evidence
 from .sql_evidence import read_sql_evidence
@@ -141,6 +142,7 @@ def compile_corpus(dataset_dir: Path, *, cache_dir: Path | None = None,
     activity = normalize_activity(tables["system_activity"], table_hashes["system_activity"], facts)
     facts.extend(activity.facts)
     diagnostics.extend(activity.diagnostics)
+    facts = list(bind_resource_references(facts))
     # Each worker owns its OCR engine. Catalog identity context is already
     # complete; media facts never supply catalog bindings for subsequent files.
     # Consume map results in manifest order to keep provenance/replays stable.
