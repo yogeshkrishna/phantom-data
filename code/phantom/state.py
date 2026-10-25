@@ -10,6 +10,35 @@ from .identities import FIELD_ALIASES, IdentityResolution, normalize_identifier
 
 STABLE_FIELDS = {"user_id", "customer_reference", "subject_reference", "customer_id"}
 SELECTOR_FIELDS = {"query", "lookup_value", "subject_selector", "uploaded_by"}
+PHONE_TEXT = re.compile(r"(?<![\w+])\+?\d[\d ().-]{5,}\d(?!\w)")
+
+
+def text_tokens(value):
+    """Index literal identifiers in prose; names never seed subject retrieval.
+
+    Short untyped fragments are intentionally excluded. Phone candidates must
+    be whole runs with at least seven digits, not substrings of another number.
+    Candidate retrieval is followed by the same temporal/ownership checks.
+    """
+    for token in set(re.findall(r"\w+", value) + re.findall(r"[\w@.+-]+", value)):
+        if len(token) >= 4:
+            yield "literal", token.casefold()
+    for match in PHONE_TEXT.finditer(value):
+        phone = normalize_identifier("phone", match[0])
+        if sum(c.isdigit() for c in phone) >= 7:
+            yield "phone", phone
+
+
+def text_matches(value, aliases):
+    tokens = set(text_tokens(value))
+    for field, alias in aliases:
+        if field == "phone" and (field, alias) in tokens:
+            return True
+        if field in {"user_id", "email_hash"} and len(alias) >= 4:
+            flags = re.I if field == "email_hash" else 0
+            if re.search(r"(?<![\w@.+-])" + re.escape(alias) + r"(?![\w@.+-])", value, flags):
+                return True
+    return False
 
 
 def _reference_field(key, value):
@@ -108,6 +137,8 @@ class StateIndex:
             # Free-text matching uses a separate exact boundary check at resolve.
             for _, value in leaves(fact.stored_fields):
                 if isinstance(value, str):
+                    for token in text_tokens(value):
+                        self._tokens[token].add(fact.entity)
                     for email in re.findall(r"[\w.+-]+@[\w.-]+\.[\w-]+", value):
                         self._tokens["email", normalize_identifier("email", email)].add(fact.entity)
         for scope in self.scopes:
@@ -134,6 +165,8 @@ class StateIndex:
                     return True
         for _, value in leaves(fact.stored_fields):
             if isinstance(value, str):
+                if text_matches(value, aliases):
+                    return True
                 emails = re.findall(r"[\w.+-]+@[\w.-]+\.[\w-]+", value)
                 if any(("email", normalize_identifier("email", email)) in aliases for email in emails):
                     return True
@@ -148,6 +181,8 @@ class StateIndex:
         candidates = set()
         for token in aliases:
             candidates.update(self._tokens.get(token, ()))
+            if token[0] in {"user_id", "email_hash"}:
+                candidates.update(self._tokens.get(("literal", token[1].casefold()), ()))
         # Query selectors have no declared field type.
         for field, value in aliases:
             candidates.update(self._tokens.get(("query", value), ()))

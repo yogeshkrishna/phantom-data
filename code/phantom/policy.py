@@ -2,10 +2,28 @@
 
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 
 from .contracts import EntityKey, EvidenceFact, EvidenceRef, parse_instant
 from .identities import FIELD_ALIASES, normalize_identifier
 from .state import ResourceState, StateView, STABLE_FIELDS, leaves
+
+
+@lru_cache(maxsize=4096)
+def _literal_pattern(value, flags=0):
+    return re.compile(r"(?<![\w@.+-])" + re.escape(value) + r"(?![\w@.+-])", flags)
+
+
+@lru_cache(maxsize=1024)
+def _name_pattern(value):
+    return re.compile(r"(?<!\w)" + re.escape(value) + r"(?!\w)", re.I)
+
+
+def _embedded_phone(value, alias):
+    if sum(c.isdigit() for c in alias) < 7:
+        return False
+    return any(normalize_identifier("phone", m[0]) == alias for m in
+               re.finditer(r"(?<![\w+])\+?\d[\d ().-]{5,}\d(?!\w)", value))
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,13 +89,12 @@ def exposed_fields(resource: ResourceState, view: StateView, *, allow_stable=Fal
             exposed = exposed or typed is not None or key in STABLE_FIELDS
             for field, alias in aliases:
                 text = normalize_identifier(field, value)
-                if field in {"email", "email_hash", "user_id"} and re.search(
-                        r"(?<![\w@.+-])" + re.escape(alias) + r"(?![\w@.+-])", text):
+                if field in {"email", "email_hash", "user_id"} and _literal_pattern(alias).search(text):
                     exposed = True
-                if field == "phone" and text == alias:
+                if field == "phone" and (text == alias or _embedded_phone(value, alias)):
                     exposed = True
             for name in view.identity.identifiers.get("name", ()):
-                if re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", value, re.I):
+                if _name_pattern(name).search(value):
                     exposed = True
         if exposed:
             found.append((path, fact))

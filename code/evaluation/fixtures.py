@@ -87,6 +87,13 @@ def cases():
         dict(name='non_deletion_authorization',summary='An explicit request against deletion authorizes no destructive plan.',
              text='Do not delete my account',sources=[('old',A,old)],
              expected=expected('non_deletion_authorization','NOT_APPLICABLE',[])),
+        dict(name='embedded_phone_in_shared_message',summary='A known phone appears only inside unstructured shared-message text.',
+             sources=[('prose',C,bundle(snapshot('support_platform','support_conversations',[
+                 dict(resource_id='opaque-prose',message_text='Please call +1 (555) 123-4567; leave the order context.')])) )],
+             expected=expected('embedded_phone_in_shared_message','INCOMPLETE',[
+                 ('FINDING','support_platform','opaque-prose','REPORT_EXPOSED_PII','PRESENT','prose'),
+                 ('REMEDIATION','support_platform','opaque-prose','REDACT_RECORD','REDACTED',''),
+                 ('VERIFICATION','support_platform','opaque-prose','VERIFY_RECORD_REDACTED','REDACTED','')])),
         dict(name='retention_and_blocked_restore',summary='Retained security and archive remain present, with restore disabled.',
              sources=[('retained',C,bundle(snapshot('security_service','security_audit_events',[dict(resource_id='opaque-audit',subject_reference='subject',retention_until='2030-01-01T00:00:00Z')]),
                  snapshot('backup_service','backup_catalog',[dict(resource_id='opaque-archive',subject_reference='subject',archive_key='archive/object.zst',restore_allowed=False)])))],

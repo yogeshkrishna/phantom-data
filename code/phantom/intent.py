@@ -3,6 +3,7 @@
 import re
 import unicodedata
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Literal
 
 
@@ -22,6 +23,13 @@ def _normalize(text: str) -> str:
 
 
 def classify_intent(request_text: str) -> IntentDecision:
+    if not isinstance(request_text, str):
+        raise ValueError("request_text must be a string")
+    return _classify_intent(request_text)
+
+
+@lru_cache(maxsize=1024)
+def _classify_intent(request_text: str) -> IntentDecision:
     """Classify consent, never using reported workflow status or case identifiers.
 
     This deterministic path covers explicit EN/FR/ES/PT/JA/KO requests. Unclear,

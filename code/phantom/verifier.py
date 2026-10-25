@@ -3,6 +3,7 @@
 import re
 from collections import defaultdict
 from dataclasses import dataclass
+from functools import lru_cache
 
 from .contracts import AuditResult, parse_instant, to_csv_row
 from .identities import FIELD_ALIASES, normalize_identifier
@@ -14,6 +15,12 @@ from .state import STABLE_FIELDS, leaves
 class VerificationReport:
     valid: bool
     issues: tuple[str, ...]
+
+
+@lru_cache(maxsize=4096)
+def _boundary_pattern(alias, name=False):
+    boundary = r"\w" if name else r"\w@.+-"
+    return re.compile(r"(?<![" + boundary + r"])" + re.escape(alias) + r"(?![" + boundary + r"])", re.I)
 
 
 def _unsafe(resource, identity, allow_stable=False, email_only=False):
@@ -33,9 +40,13 @@ def _unsafe(resource, identity, allow_stable=False, email_only=False):
                 for kind, aliases in identity.identifiers.items():
                     for alias in aliases:
                         if kind == "phone":
-                            unsafe |= normalize_identifier(kind, value) == normalize_identifier(kind, alias)
+                            number = normalize_identifier(kind, alias)
+                            unsafe |= normalize_identifier(kind, value) == number
+                            if sum(c.isdigit() for c in number) >= 7:
+                                unsafe |= any(normalize_identifier(kind, m[0]) == number for m in
+                                              re.finditer(r"(?<![\w+])\+?\d[\d ().-]{5,}\d(?!\w)", value))
                         else:
-                            unsafe |= bool(re.search(r"(?<![\w@.+-])" + re.escape(alias) + r"(?![\w@.+-])", value, re.I))
+                            unsafe |= bool(_boundary_pattern(alias, kind == "name").search(value))
             if unsafe:
                 facts.append(field.fact)
     return facts
