@@ -1,6 +1,7 @@
 """Grounded media layouts. Geometry and labels, never file names or answer tables."""
 import hashlib
 import re
+import threading
 from dataclasses import replace
 from datetime import datetime, timezone
 
@@ -10,6 +11,7 @@ from .local_model import TextSpan
 
 EMAIL = r"[\w.+-]+@[\w.-]+\.[\w-]+"
 ID = r"[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]+"
+PDFIUM_LOCK = threading.Lock()  # PDFium's native API is not thread-safe.
 
 
 def _date(text):
@@ -250,7 +252,7 @@ def read_media_evidence(entry, ocr, context=()):
     source = _source(entry)
     if entry.path.suffix.lower() == ".pdf":
         import pypdfium2 as pdfium
-        with pdfium.PdfDocument(raw) as document:
+        with PDFIUM_LOCK, pdfium.PdfDocument(raw) as document:
             pages = []
             for page in document:
                 text = page.get_textpage().get_text_range()

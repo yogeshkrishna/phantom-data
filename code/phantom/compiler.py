@@ -3,6 +3,9 @@ import hashlib
 import importlib.metadata
 import sqlite3
 import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -103,7 +106,8 @@ def compile_corpus(dataset_dir: Path, *, cache_dir: Path | None = None,
             facts, scopes, diagnostics = decode(cached)
             usage = dict(cached["model_usage"] or {}) or None
             if usage:
-                usage = dict(usage, preparation_provenance=usage, calls=0, cache_hits=0, inference_seconds=0.0, compiled_cache_hit=True)
+                usage = dict(usage, preparation_provenance=usage, calls=0, cache_hits=0, inference_seconds=0.0,
+                             media_wall_seconds=0.0, workers_used=0, compiled_cache_hit=True)
             return CompiledCorpus(tables, facts, scopes, diagnostics, tuple(cached["inventory"]), usage, key, True)
         except (ValueError, TypeError, KeyError):
             pass
@@ -137,14 +141,40 @@ def compile_corpus(dataset_dir: Path, *, cache_dir: Path | None = None,
     activity = normalize_activity(tables["system_activity"], table_hashes["system_activity"], facts)
     facts.extend(activity.facts)
     diagnostics.extend(activity.diagnostics)
-    for entry in media:
-        try:
-            accept(entry, read_media_evidence(entry, ocr, facts))
-        except (OSError, ValueError):
-            fail(entry)
+    # Each worker owns its OCR engine. Catalog identity context is already
+    # complete; media facts never supply catalog bindings for subsequent files.
+    # Consume map results in manifest order to keep provenance/replays stable.
+    batches, usage = _media_batches(media, ocr, tuple(facts)) if media else ([], None)
+    for entry, batch in zip(media, batches):
+        fail(entry) if batch is None else accept(entry, batch)
     payload = dict(facts=[asdict(f) for f in facts], scopes=[asdict(s) for s in scopes],
                    diagnostics=[asdict(d) for d in diagnostics], inventory=inventory,
-                   model_usage=ocr.usage() if model_identity else None)
+                   model_usage=usage)
     if cache:
         cache.store(key, payload)
     return CompiledCorpus(tables, tuple(facts), tuple(scopes), tuple(diagnostics), tuple(inventory), payload["model_usage"], key, False)
+
+
+def _media_batches(entries, ocr, context):
+    local, engines = threading.local(), []
+    lock = threading.Lock()
+
+    def read(entry):
+        if not hasattr(local, "ocr"):
+            local.ocr = LocalOCR(ocr.cache_dir)
+            with lock:
+                engines.append(local.ocr)
+        try:
+            return read_media_evidence(entry, local.ocr, context)
+        except (OSError, ValueError):
+            return None
+
+    started = time.perf_counter()
+    with ThreadPoolExecutor(max_workers=2, thread_name_prefix="media") as pool:
+        batches = list(pool.map(read, entries))
+    usage = ocr.usage()
+    usage.update(calls=sum(engine.calls for engine in engines),
+                 cache_hits=sum(engine.cache_hits for engine in engines),
+                 inference_seconds=sum(engine.seconds for engine in engines),
+                 media_wall_seconds=time.perf_counter() - started, workers_used=len(engines))
+    return batches, usage
