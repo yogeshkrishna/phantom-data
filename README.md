@@ -1,32 +1,22 @@
-<div align="center">
-
 # Phantom Data
 
-**Ghost Data Does Not Exist**
+Local, evidence-grounded deletion auditing for HackerRank Orchestrate's
+[Ghost Data Still Exists](https://github.com/interviewstreet/hackerrank-orchestrate-october26/blob/main/problem_statement.md).
 
-HackerRank Orchestrate · October 2026
+The Python 3.12 pipeline resolves historical identities, reads CSV/JSON/SQL/logs,
+PDFs and screenshots, reconstructs each physical store at the audit cutoff, and
+applies supplied policy. An independent checker validates every proposed result.
+Neural OCR runs locally; no paid API is required.
 
-[![Event](https://img.shields.io/badge/HackerRank-Orchestrate-2EC866?style=flat-square)](https://www.hackerrank.com/hackerrank-orchestrate-october26)
-![Status](https://img.shields.io/badge/status-in%20development-8B5CF6?style=flat-square)
+[Setup and commands](code/README.md) | [Measured evaluation](code/evaluation/evaluation_report.md) |
+[Release gates and missing proof](code/evaluation/release_readiness.md)
 
-</div>
+Visible development samples currently measure 87.5% status accuracy, 86.1% step F1
+and 21.875% exact rows. These are not hidden-test scores. The full 518-request
+attempt supports 457 results and blocks 61 for missing proof. The release command
+will not invent those results or write a misleading final CSV.
 
----
-
-## About
-
-Project repository for **HackerRank Orchestrate — October 2026**, tackling the problem statement **“Ghost Data Does Not Exist.”**
-
-## Problem statement
-
-**Ghost Data Does Not Exist**
-
-The challenge title is recorded here. The full brief, requirements, and evaluation criteria will be documented when added to this repository.
-
-## Project status
-
-Initial repository setup. Implementation, setup instructions, architecture notes, and evaluation results will be added as the project develops.
-
-## Event
-
-[HackerRank Orchestrate — October 2026](https://www.hackerrank.com/hackerrank-orchestrate-october26)
+Source, runtime usage and extracted-package checks are included in code.zip.
+The corpus, private evidence caches, model binaries and transcript stay outside
+the code archive. Transcript export retains genuine history and states known
+provenance gaps.

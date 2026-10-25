@@ -1,5 +1,6 @@
 """Scoped traces, operation claims, partial parsing and activity ownership."""
 import hashlib
+import os
 import json
 import sys
 import unittest
@@ -205,7 +206,8 @@ class TextTests(unittest.TestCase):
 
 class RealLogIntegrationTests(unittest.TestCase):
     def test_every_log_and_text_event_accounted_for_unchanged(self):
-        dataset = Path(__file__).resolve().parents[3] / "research" / "october26" / "dataset"
+        dataset = Path(os.environ.get("PHANTOM_DATASET", Path(__file__).resolve().parents[3]
+                                     / "research" / "october26" / "dataset"))
         if not dataset.is_dir():
             self.skipTest("optional official corpus is not available")
         counts = {".log": 0, ".txt": 0}

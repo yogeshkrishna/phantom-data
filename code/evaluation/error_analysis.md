@@ -96,3 +96,29 @@ without claiming held-out performance. Historical identities, replica evidence
 and neural image facts are removed independently on the same 32 requests.
 Unsafe/removal variants are confined to evaluation, with no production flags.
 Raw model inference is outside these prepared ablation timings.
+
+## Release follow-up
+
+The official remote was rechecked on 25 October 2026. Relative to the source
+snapshot used here, its latest commit changes an AGENTS.md URL, not the dataset.
+The unresolved resource selectors, snapshot scope and retention boundaries have
+not been supplied by that update. Organizer issue 19 independently describes
+missing sample security records; the source traces above are our own checks.
+
+A retrieval defect was corrected: exact known hashes, internal IDs and complete
+phone numbers in free text now generate candidates, with temporal availability,
+explicit-other-owner and literal-boundary checks still enforced. Known phone
+numbers embedded in prose are checked independently by policy and verifier.
+Names alone and short numeric fragments never establish a subject link. New
+counterexamples cover prefixes, another owner, unavailable sources, historical
+redaction and forged clean phone results. A name-at-sentence-end regression is
+also covered. This improves supported behavior on new fixtures; it does not
+increase the measured sample score or change the current supported predictions.
+
+Bounded intent and regex caches avoid repeated normalization/compilation without
+caching audit verdicts. Four before/after prepared all-request trials measured
+1.209/1.248/1.520/1.227 seconds before and 0.969/0.584/0.581/0.584 seconds after.
+Both runs produced the same supported-prediction digest. These timings include
+blocked attempts and independent verification, exclude source/OCR preparation,
+and are machine/load dependent. Current full-run and cold-package timings are
+recorded in release_readiness.md and package_rehearsal.md.

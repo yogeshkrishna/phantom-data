@@ -32,7 +32,7 @@ Positional field accuracy (unmatched/missing/extra positions are penalized):
 
 Missing cases: case_01, case_02, case_04, case_31. Extra cases: none.
 
-Evidence: 94/94 files interpreted, 0 diagnostics. Preparation 13.039s; prepared sample attempts 0.259s; compiler cache hit=False.
+Evidence: 94/94 files interpreted, 0 diagnostics. Preparation 2.740s; prepared sample attempts 0.062s; compiler cache hit=False.
 
 ## Independent filesystem cases
 
@@ -44,6 +44,7 @@ Evidence: 94/94 files interpreted, 0 diagnostics. Preparation 13.039s; prepared 
 | shared_support_personal_attachment | INCOMPLETE | PASS | True |
 | future_source_unavailable | INCOMPLETE | PASS | True |
 | non_deletion_authorization | NOT_APPLICABLE | PASS | True |
+| embedded_phone_in_shared_message | INCOMPLETE | PASS | True |
 | retention_and_blocked_restore | COMPLETE | PASS | True |
 
 Fixtures construct their own CSV/JSON/SQL sources and explicit expected plans; no production planner generates their labels. Full source/expectations are in fixtures.py.
@@ -54,6 +55,7 @@ Fixtures construct their own CSV/JSON/SQL sources and explicit expected plans; n
 - shared_support_personal_attachment: Shared conversation is redacted; a personal attachment is removed.
 - future_source_unavailable: A clean observation is captured after cutoff and cannot erase the visible profile.
 - non_deletion_authorization: An explicit request against deletion authorizes no destructive plan.
+- embedded_phone_in_shared_message: A known phone appears only inside unstructured shared-message text.
 - retention_and_blocked_restore: Retained security and archive remain present, with restore disabled.
 
 ## Error inventory
@@ -153,9 +155,9 @@ Same visible32 requests, same expected rows and independent verifier. Deliberate
 
 | Variant | Status accuracy | Exact row | Step F1 | Predictions | Blocked | Seconds |
 |---|---|---|---|---|---|---|
-| full | 0.875000 | 0.218750 | 0.861111 | 28 | 4 | 2.940 |
-| without_historical_identities | 0.750000 | 0.218750 | 0.754601 | 24 | 8 | 1.821 |
-| without_replicas | 0.812500 | 0.156250 | 0.831909 | 26 | 6 | 3.305 |
-| without_neural_images | 0.875000 | 0.218750 | 0.865922 | 28 | 4 | 3.778 |
+| full | 0.875000 | 0.218750 | 0.861111 | 28 | 4 | 1.097 |
+| without_historical_identities | 0.750000 | 0.218750 | 0.754601 | 24 | 8 | 0.627 |
+| without_replicas | 0.812500 | 0.156250 | 0.831909 | 26 | 6 | 0.833 |
+| without_neural_images | 0.875000 | 0.218750 | 0.865922 | 28 | 4 | 0.888 |
 
 The image removal isolates neural screenshot facts; PDF text layers remain. Better or worse sample metrics under a removal do not establish hidden-test benefit. Additional supported records absent from a canonical row can reduce exact-match scores.
